@@ -357,7 +357,7 @@ function PlannerBody({ sp, inp, day, tab }: { sp: SpeciesData; inp: Inputs; day:
               variant="secondary"
               icon="download"
               onClick={async () => {
-                if (svgRef.current) files.save(await svgToPng(svgRef.current, 1600), `morabbi-plan-day${day}.png`)
+                if (svgRef.current) files.save(await svgToPng(svgRef.current, 1600), `tuyuri-plan-day${day}.png`)
               }}
             >
               {t('common.exportPng')}

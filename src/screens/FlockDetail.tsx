@@ -134,7 +134,7 @@ export default function FlockDetail() {
           </Card>
 
           <div className="grid gap-2">
-            <Button variant="secondary" icon="download" onClick={() => files.save(logsToCsv(flock, logs), `morabbi-${flock.id}-logs.csv`)}>
+            <Button variant="secondary" icon="download" onClick={() => files.save(logsToCsv(flock, logs), `tuyuri-${flock.id}-logs.csv`)}>
               {t('flock.exportLogs')}
             </Button>
             {flock.status === 'active' ? (

@@ -1,4 +1,4 @@
-# CLAUDE.md — مُربّي
+# CLAUDE.md — طيور في بيتي (الاسم القديم: مُربّي)
 
 ابدأ أي جلسة بقراءة الملف ده و `PROGRESS.md`، وكمّل من آخر نقطة.
 
@@ -31,3 +31,8 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 
 ## ملفات المتابعة
 `PLAN.md` · `PROGRESS.md` · `DECISIONS.md` · `QUESTIONS.md` · `DATA_REVIEW.md`
+
+## v2.0
+- الاسم: "طيور في بيتي" (قصير: "طيوري"). **اسم قاعدة البيانات `morabbi` ومفاتيح localStorage `morabbi-*` ثابتين عمداً** — تغييرهم يمسح بيانات المستخدمين.
+- أي تغيير في Dexie = `db.version(n+1)` + upgrade + test في `src/db/migrations.test.ts`.
+- خطة التحديث في `PLAN-v2.0.md`، والتغييرات في `CHANGELOG.md`.

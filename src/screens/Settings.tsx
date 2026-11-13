@@ -69,7 +69,7 @@ export default function Settings() {
       <Card>
         <p className="mb-3 text-sm text-muted">{t('settings.storage')}</p>
         <div className="grid gap-2">
-          <Button variant="secondary" icon="download" onClick={async () => files.save(await exportBackup(), `morabbi-backup-${todayISO()}.json`)}>
+          <Button variant="secondary" icon="download" onClick={async () => files.save(await exportBackup(), `tuyuri-backup-${todayISO()}.json`)}>
             {t('settings.export')}
           </Button>
           <Button

@@ -1,7 +1,8 @@
 /** Arabic (Egyptian) UI strings. Content text lives in src/data as LocalizedText. */
 export const ar = {
-  'app.name': 'مُربّي',
-  'app.tagline': 'دليلك لتربية الطيور يوم بيوم',
+  'app.name': 'طيور في بيتي',
+  'app.shortName': 'طيوري',
+  'app.tagline': 'دليلك لتربية الطيور في البيت يوم بيوم',
   'app.beta': 'نسخة تجريبية',
 
   'nav.home': 'الرئيسية',
@@ -482,11 +483,11 @@ export const ar = {
   'settings.import': 'استرجاع نسخة احتياطية',
   'settings.importConfirm': 'الاسترجاع هيمسح البيانات الحالية ويحط مكانها النسخة. تكمّل؟',
   'settings.importDone': 'اترجعت {n} قطعان',
-  'settings.importBad': 'الملف ده مش نسخة احتياطية سليمة من مُربّي.',
+  'settings.importBad': 'الملف ده مش نسخة احتياطية سليمة من طيور في بيتي.',
   'settings.feedback': 'ابعت رأيك',
   'settings.feedbackBody': 'رأيك بيفرق جداً في النسخة التجريبية. ابعتلنا على واتساب: إيه اللي عجبك، وإيه اللي محتاج يتحسن.',
   'settings.feedbackBtn': 'افتح واتساب',
-  'settings.feedbackMsg': 'رأيي في تطبيق مُربّي (نسخة {v}):\n',
+  'settings.feedbackMsg': 'رأيي في تطبيق طيور في بيتي (نسخة {v}):\n',
   'settings.about': 'عن التطبيق',
   'settings.version': 'النسخة {v}',
   'settings.storage': 'البيانات محفوظة على موبايلك بس، ومش بتتبعت لأي حد.',
@@ -496,7 +497,7 @@ export const ar = {
   'offline.ready': 'التطبيق جاهز يشتغل من غير نت',
   'update.ready': 'في تحديث جديد',
   'update.reload': 'حدّث',
-  'notify.title': 'مُربّي — مهام النهارده',
+  'notify.title': 'طيوري — مهام النهارده',
 
   'err.notFound': 'الصفحة دي مش موجودة',
   'err.flockNotFound': 'القطيع ده مش موجود',

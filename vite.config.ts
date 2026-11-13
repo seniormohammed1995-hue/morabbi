@@ -20,9 +20,9 @@ export default defineConfig({
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         id: base,
-        name: 'مُربّي — دليلك لتربية الطيور',
-        short_name: 'مُربّي',
-        description: 'خطة دورة يوم بيوم ومتابعة القطيع لتربية الطيور في مصر',
+        name: 'طيور في بيتي',
+        short_name: 'طيوري',
+        description: 'دليلك لتربية الطيور في البيت في مصر: خطة يوم بيوم، متابعة، وتنبيهات الجو',
         lang: 'ar',
         dir: 'rtl',
         start_url: base,
