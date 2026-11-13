@@ -1,4 +1,5 @@
-import { CycleTemplate, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { INGREDIENTS } from './ingredients'
+import { CycleTemplate, Ingredient, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
 import { broilerWhite } from './species/broiler-white'
 import { broilerWhiteCycle } from './cycles/broiler-white.cycle'
 import { ar } from './helpers'
@@ -39,6 +40,10 @@ export function getSpecies(id: string): SpeciesEntry | undefined {
 /** Validates every data file against the schema. Returns a list of human-readable errors. */
 export function validateAll(): string[] {
   const errors: string[] = []
+  for (const ing of INGREDIENTS) {
+    const r = Ingredient.safeParse(ing)
+    if (!r.success) for (const i of r.error.issues) errors.push(`ingredient ${ing.id}: ${i.path.join('.')} — ${i.message}`)
+  }
   for (const [id, entry] of Object.entries(SPECIES)) {
     const s = SpeciesData.safeParse(entry.data)
     if (!s.success) for (const i of s.error.issues) errors.push(`${id}: ${i.path.join('.')} — ${i.message}`)
@@ -86,5 +91,6 @@ export function lowConfidenceValues(): Array<{ speciesId: string; path: string; 
     for (const [k, v] of Object.entries(o)) walk(speciesId, v, path ? `${path}.${k}` : k)
   }
   for (const [id, e] of Object.entries(SPECIES)) walk(id, e.data, '')
+  for (const ing of INGREDIENTS) walk('ingredients', ing, ing.id)
   return out
 }

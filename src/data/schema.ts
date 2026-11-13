@@ -230,6 +230,10 @@ export const SpeciesData = z.object({
   feed: z.object({
     phases: z.array(FeedPhase).min(1),
     bagKg: SourcedValue,
+    /** Things never to feed this species. */
+    forbidden: z.array(LocalizedText).min(1),
+    /** Practical notes on supplements / kitchen scraps for home rearing. */
+    homeNotes: z.array(LocalizedText).min(1),
   }),
   health: z.object({
     vaccinations: z.array(Vaccination),
@@ -250,6 +254,18 @@ export const SpeciesData = z.object({
   }),
 })
 export type SpeciesData = z.infer<typeof SpeciesData>
+
+/** Feed ingredient composition (as-fed basis). */
+export const Ingredient = z.object({
+  id: z.string().min(1),
+  name: LocalizedText,
+  kind: z.enum(['energy', 'protein', 'byproduct', 'mineral', 'custom']),
+  crudeProtein: SourcedValue,
+  energy: SourcedValue,
+  calcium: SourcedValue.optional(),
+  note: LocalizedText.optional(),
+})
+export type Ingredient = z.infer<typeof Ingredient>
 
 export const SourceRef = z.object({
   id: z.string().min(1),

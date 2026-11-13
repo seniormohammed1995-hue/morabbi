@@ -69,7 +69,8 @@ export default function Library() {
       </Card>
       {nq && terms.length === 0 && spMatch.length === 0 && <p className="py-6 text-center text-muted">{t('library.noResults')}</p>}
 
-      <div className="mt-5">
+      <div className="mt-5 grid gap-2">
+        <LinkCard to="/feeds" icon="feed" title={t('nav.feeds')} />
         <LinkCard to="/library/sources" icon="info" title={t('library.sources')} />
       </div>
     </Page>

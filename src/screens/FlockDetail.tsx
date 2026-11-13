@@ -121,6 +121,7 @@ export default function FlockDetail() {
           <div className="grid gap-2">
             <LinkCard to={`/flocks/${flockId}/cycle`} icon="calendar" title={t('home.viewCycle')} />
             <LinkCard to={`/planner?flock=${flockId}`} icon="layout" title={t('flock.planner')} />
+            <LinkCard to={`/feeds?flock=${flockId}`} icon="feed" title={t('nav.feeds')} />
           </div>
 
           <Card>

@@ -160,6 +160,7 @@ function FlockToday({ id }: { id: number }) {
         <LinkCard to={`/flocks/${id}/cycle`} icon="calendar" title={t('home.viewCycle')} />
         <LinkCard to={`/flocks/${id}`} icon="chart" title={t('home.viewFlock')} />
         <LinkCard to={`/planner?flock=${id}`} icon="layout" title={t('flock.planner')} />
+        <LinkCard to={`/feeds?flock=${id}`} icon="feed" title={t('nav.feeds')} />
       </div>
     </div>
   )

@@ -37,7 +37,7 @@ export default function Sources() {
           <li key={`${l.speciesId}-${l.path}`} className="rounded-xl border border-line bg-surface p-3 text-sm">
             <div className="flex items-center gap-2">
               <Badge tone="warn">{t('common.indicative')}</Badge>
-              <span className="font-bold">{lt(SPECIES[l.speciesId]!.data.name)}</span>
+              <span className="font-bold">{SPECIES[l.speciesId] ? lt(SPECIES[l.speciesId]!.data.name) : t('feeds.ingredients')}</span>
             </div>
             <code className="mt-1 block text-xs text-muted" dir="ltr">
               {l.path}

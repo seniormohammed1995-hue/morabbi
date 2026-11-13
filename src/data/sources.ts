@@ -94,6 +94,14 @@ export const SOURCES = {
     url: 'https://almalnews.com/2145295/',
     kind: 'app-rule',
   },
+  fpMaize: { id: 'fpMaize', title: 'Feedipedia (FAO/INRAE/CIRAD) — Maize grain, yellow', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/11668', kind: 'fao' },
+  fpSbm44: { id: 'fpSbm44', title: 'Feedipedia — Soybean meal, low protein, type 44-46', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/11682', kind: 'fao' },
+  fpSbm48: { id: 'fpSbm48', title: 'Feedipedia — Soybean meal, type 48', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/26068', kind: 'fao' },
+  fpBran: { id: 'fpBran', title: 'Feedipedia — Wheat bran', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/12751', kind: 'fao' },
+  fpGluten: { id: 'fpGluten', title: 'Feedipedia — Maize gluten meal', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/12288', kind: 'fao' },
+  fpFish: { id: 'fpFish', title: 'Feedipedia — Fish meal (type 62)', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/208', kind: 'fao' },
+  fpLimestone: { id: 'fpLimestone', title: 'Feedipedia — Limestone', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/59', kind: 'fao' },
+  fpMinerals: { id: 'fpMinerals', title: 'Feedipedia — Manufactured sources of minerals', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/13729', kind: 'fao' },
 } as const satisfies Record<string, SourceRef>
 
 export type SourceId = keyof typeof SOURCES
