@@ -82,6 +82,33 @@ export interface Brood {
   createdAt: number
 }
 
+/** v3: one "flock news" entry (أخبار قطيعي) written by the user. */
+export type JournalTag = 'note' | 'eggs' | 'health' | 'emergency'
+export interface JournalEntry {
+  id: number
+  date: string
+  /** Time written (ms). */
+  at: number
+  tag: JournalTag
+  text: string
+  /** Group the note is about, if any. */
+  flockId?: number
+  /** Set when the entry was queued for the cloud (only if the user turned cloud sync on). */
+  queuedAt?: number
+}
+
+/** v3: a row waiting to be sent to the Google Sheet (survives offline and app restarts). */
+export interface OutboxItem {
+  id: number
+  sheet: string
+  row: Record<string, string | number>
+  createdAt: number
+  tries: number
+  /** Do not retry before this time (ms). */
+  nextAt: number
+  lastError?: string
+}
+
 export interface KV {
   key: string
   value: unknown
@@ -94,6 +121,8 @@ export const db = new Dexie('morabbi') as Dexie & {
   kv: EntityTable<KV, 'key'>
   eggs: EntityTable<EggLog, 'id'>
   broods: EntityTable<Brood, 'id'>
+  journal: EntityTable<JournalEntry, 'id'>
+  outbox: EntityTable<OutboxItem, 'id'>
 }
 
 db.version(1).stores({
@@ -118,6 +147,12 @@ db.version(2)
         Object.assign(f, migrateFlockV2(f))
       })
   })
+
+// v3.0: flock news journal and the cloud outbox. New tables only; existing rows are untouched.
+db.version(3).stores({
+  journal: '++id, date, at, flockId',
+  outbox: '++id, nextAt',
+})
 
 export type NewFlock = Omit<Flock, 'id'>
 export type NewLog = Omit<DailyLog, 'id'>

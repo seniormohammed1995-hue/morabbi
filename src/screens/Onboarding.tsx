@@ -13,6 +13,8 @@ import { BirdArt, type KindCard } from '../ui/BirdArt'
 import { Icon, type IconName } from '../ui/Icon'
 import { Badge, Button, Card, cx, NumberInput, Page } from '../ui/kit'
 import { LocationPicker } from './weather/LocationPicker'
+import { cloudEnabled, saveProfile } from '../cloud/client'
+import { isEgyptMobile, normalizePhone } from '../cloud/payload'
 
 const CARDS: KindCard[] = ['chicken', 'pigeon', 'quail', 'duck', 'goose', 'turkey', 'chicks']
 
@@ -81,6 +83,9 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
   const [details, setDetails] = useState<Detail[]>([])
   const [place, setPlace] = useState<Place>('roof-shaded')
   const [saving, setSaving] = useState(false)
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [phoneErr, setPhoneErr] = useState(false)
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [step])
@@ -116,6 +121,15 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
       })
     }
     await setKinds(details.map((d) => d.kind))
+    // v3 sign-up: only when the user typed a name on the welcome screen.
+    if (name.trim().length >= 2) {
+      await saveProfile({
+        name: name.trim(),
+        phone: normalizePhone(phone),
+        governorate: loc?.governorate ?? '',
+        kinds: [...new Set(details.map((d) => d.kind))],
+      })
+    }
     accept()
     markVersionSeen()
     onboarding.finish()
@@ -136,7 +150,52 @@ export default function Onboarding({ onDone }: { onDone: () => void }) {
         <Card className="mt-4">
           <p className="leading-relaxed">{t('disclaimer.body')}</p>
         </Card>
-        <Button className="mt-6" full onClick={() => setStep({ s: 'kinds' })}>
+        <div className="mt-4 grid gap-3">
+          <label className="grid gap-1 font-semibold">
+            {t('ob.name')}
+            <input
+              autoComplete="name"
+              maxLength={40}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t('join.namePh')}
+              className="min-h-12 rounded-xl border border-line bg-surface px-3 text-lg font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </label>
+          <label className="grid gap-1 font-semibold">
+            {t('ob.phone')}
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              dir="ltr"
+              value={phone}
+              onChange={(e) => {
+                setPhone(e.target.value)
+                setPhoneErr(false)
+              }}
+              placeholder="01xxxxxxxxx"
+              className="min-h-12 rounded-xl border border-line bg-surface px-3 text-end text-lg font-normal outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </label>
+          {phoneErr && (
+            <p role="alert" className="text-sm font-semibold text-danger">
+              {t('join.err.phone')}
+            </p>
+          )}
+          {name.trim().length >= 2 && (
+            <p className="text-xs text-muted">{cloudEnabled() ? t('join.privacy.cloud') : t('join.privacy.local')}</p>
+          )}
+        </div>
+        <Button
+          className="mt-6"
+          full
+          onClick={() => {
+            const p = normalizePhone(phone)
+            if (p && !isEgyptMobile(p)) return setPhoneErr(true)
+            setStep({ s: 'kinds' })
+          }}
+        >
           {t('ob.start')}
         </Button>
       </Page>

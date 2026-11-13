@@ -1,23 +1,86 @@
 /**
- * Platform layer. Every browser-specific API used by the app goes through here,
- * so wrapping with Capacitor later means swapping this file's implementation
- * (LocalNotifications, Filesystem, Share plugins) without touching screens.
+ * Platform layer. Every browser-specific API used by the app goes through here.
+ * On Android (Capacitor) notifications go through LocalNotifications (src/platform/native.ts)
+ * so reminders fire while the app is closed; on the web they only fire while it is open.
  */
+import { isNative, nativeNotifications, platformName, type DailyNotification } from './native'
+
+export { isNative, platformName, wireBackButton } from './native'
+export type { DailyNotification } from './native'
 
 export type PermissionState = 'granted' | 'denied' | 'default' | 'unsupported'
 
+/** Native permission is async; cached here so `state()` stays synchronous for the UI. */
+let nativePerm: PermissionState = 'default'
+
+/** Small stable hash so string tags map to Android's numeric ids (above the reminder ids). */
+function tagId(tag: string): number {
+  let h = 0
+  for (const c of tag) h = (h * 31 + c.charCodeAt(0)) | 0
+  return 100_000 + (Math.abs(h) % 1_000_000)
+}
+
 export const notifications = {
+  /** Call once on start (reads the Android permission). */
+  async init(): Promise<void> {
+    if (!isNative()) return
+    try {
+      nativePerm = await nativeNotifications.permission()
+      if (nativePerm === 'granted') await nativeNotifications.ensureChannel()
+    } catch {
+      nativePerm = 'unsupported'
+    }
+  },
+  /** True when reminders can fire with the app closed. */
+  canScheduleClosed(): boolean {
+    return isNative()
+  },
   state(): PermissionState {
+    if (isNative()) return nativePerm
     if (typeof window === 'undefined' || !('Notification' in window)) return 'unsupported'
     return Notification.permission
   },
   async request(): Promise<PermissionState> {
+    if (isNative()) {
+      try {
+        nativePerm = await nativeNotifications.request()
+        if (nativePerm === 'granted') await nativeNotifications.ensureChannel()
+      } catch {
+        nativePerm = 'unsupported'
+      }
+      return nativePerm
+    }
     if (!('Notification' in window)) return 'unsupported'
     return Notification.requestPermission()
   },
-  /** Shows a local notification now. Uses the service worker when available (required on Android). */
+  /** Replaces the repeating daily reminders (Android only; false on the web). */
+  async scheduleDaily(
+    items: DailyNotification[],
+    isReminderId: (id: number) => boolean,
+  ): Promise<boolean> {
+    if (!isNative() || nativePerm !== 'granted') return false
+    try {
+      await nativeNotifications.replaceDaily(items, isReminderId)
+      return true
+    } catch {
+      return false
+    }
+  },
+  /** Runs `handler` with the notification id when the user taps one (Android). */
+  onTap(handler: (id: number) => void): void {
+    if (isNative()) void nativeNotifications.onTap(handler).catch(() => undefined)
+  },
+  /** Shows a local notification now. Uses the service worker when available (required on Android Chrome). */
   async show(title: string, body: string, tag: string): Promise<boolean> {
     if (notifications.state() !== 'granted') return false
+    if (isNative()) {
+      try {
+        await nativeNotifications.showNow(tagId(tag), title, body)
+        return true
+      } catch {
+        return false
+      }
+    }
     const options: NotificationOptions = { body, tag, icon: 'icons/icon-192.png', lang: 'ar', dir: 'rtl' }
     try {
       const reg = await navigator.serviceWorker?.getRegistration()
@@ -115,11 +178,32 @@ export const share = {
       return false
     }
   },
+  /** System share sheet with a link (Android's share sheet inside the APK too). */
+  async link(title: string, text: string, url: string): Promise<boolean> {
+    if (!share.canShare()) return false
+    try {
+      await navigator.share({ title, text, url })
+      return true
+    } catch {
+      return false
+    }
+  },
+  /** Copies text to the clipboard. */
+  async copy(text: string): Promise<boolean> {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      return false
+    }
+  },
   /** Opens an external URL (WhatsApp, source links) outside the app. */
   openExternal(url: string): void {
     window.open(url, '_blank', 'noopener,noreferrer')
   },
 }
+
+let audio: AudioContext | null = null
 
 export const device = {
   vibrate(ms: number): void {
@@ -128,6 +212,51 @@ export const device = {
     } catch {
       /* vibration is optional */
     }
+  },
+  /** A short two-note chime (Web Audio, no sound files). Silent if audio is blocked. */
+  chime(kind: 'ok' | 'alert' = 'ok'): void {
+    if (!device.soundOn()) return
+    try {
+      const Ctx =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (!Ctx) return
+      audio ??= new Ctx()
+      const ctx = audio
+      const notes = kind === 'ok' ? [660, 880] : [880, 660]
+      notes.forEach((f, i) => {
+        const o = ctx.createOscillator()
+        const g = ctx.createGain()
+        const t0 = ctx.currentTime + i * 0.14
+        o.type = 'sine'
+        o.frequency.value = f
+        g.gain.setValueAtTime(0.0001, t0)
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02)
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.22)
+        o.connect(g).connect(ctx.destination)
+        o.start(t0)
+        o.stop(t0 + 0.25)
+      })
+    } catch {
+      /* sound is optional */
+    }
+  },
+  soundOn(): boolean {
+    return prefs.get('morabbi-sound') !== '0'
+  },
+  setSound(on: boolean): void {
+    prefs.set('morabbi-sound', on ? '1' : '0')
+  },
+  /** Random id for this install (sent with cloud rows). */
+  randomId(): string {
+    try {
+      return crypto.randomUUID()
+    } catch {
+      return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+    }
+  },
+  online(): boolean {
+    return typeof navigator === 'undefined' ? true : navigator.onLine !== false
   },
   /** Requests persistent storage so the browser does not evict IndexedDB data. */
   async persistStorage(): Promise<boolean> {
@@ -155,3 +284,37 @@ export const prefs = {
     }
   },
 }
+
+/**
+ * Google Apps Script web app. The body goes as text/plain so the browser makes a "simple"
+ * request (no CORS preflight, which Apps Script cannot answer); Apps Script replies through a
+ * redirect that allows any origin, so the JSON answer is readable.
+ */
+export const cloud = {
+  async post(
+    url: string,
+    body: unknown,
+    timeoutMs = 15_000,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const ctl = new AbortController()
+    const timer = setTimeout(() => ctl.abort(), timeoutMs)
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body),
+        redirect: 'follow',
+        signal: ctl.signal,
+      })
+      if (!res.ok) return { ok: false, error: `http ${res.status}` }
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null
+      return json?.ok ? { ok: true } : { ok: false, error: json?.error ?? 'bad response' }
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'network' }
+    } finally {
+      clearTimeout(timer)
+    }
+  },
+}
+
+export const runtime = { isNative, platformName }

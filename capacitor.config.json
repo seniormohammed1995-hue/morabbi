@@ -1,0 +1,15 @@
+{
+  "appId": "io.github.seniormohammed1995hue.tuyuri",
+  "appName": "طيور في بيتي",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#FBF5EA"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_tuyuri",
+      "iconColor": "#B4532A"
+    }
+  }
+}

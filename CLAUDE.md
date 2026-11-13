@@ -40,3 +40,9 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - السلالات في `src/data/birds/<kind>.ts` (schema `BirdProfile`، 8 بنود إجبارية) ومصادرها في `src/data/birds/sources/<kind>.ts`. بواقي البيت في `src/data/scraps.ts` وكل سلالة لازم تحكم على كل بند.
 - الجو بيمر من `src/platform/weather/` بس؛ الحسابات في `src/calc/weather.ts` والمعاملات في `src/data/weather.ts`.
 - رقم واتساب الآراء في `src/config.ts`.
+
+## v3.0
+- التذكيرات: الحساب في `src/calc/reminders.ts`، الإعدادات والجدولة في `src/reminders.ts`، والإشعارات المتكررة على أندرويد في `src/platform/native.ts`. ids التذكيرات 1000–3999 محجوزة.
+- السحابة: `src/cloud/payload.ts` (pure + tests) و `src/cloud/client.ts` (profile، outbox، feedback). السكربت في `cloud/apps-script/Code.gs` — أي عمود جديد يتضاف في المكانين.
+- الأندرويد: `capacitor.config.json` + `.github/workflows/build-android.yml` (tag `v*`)؛ فولدر `android/` متجاهَل وبيتعمل في CI. الشرح في `ANDROID.md`.
+- اللينكات والأرقام الشخصية في `src/config.ts` بس، والفاضي = الزرار مخفي.

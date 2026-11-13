@@ -1,4 +1,5 @@
 import { arV2 } from './ar-v2'
+import { arV3 } from './ar-v3'
 
 /** Arabic (Egyptian) UI strings. Content text lives in src/data as LocalizedText. */
 export const ar = {
@@ -505,6 +506,7 @@ export const ar = {
   'err.notFound': 'الصفحة دي مش موجودة',
   'err.flockNotFound': 'القطيع ده مش موجود',
   'err.generic': 'حصل خطأ غير متوقع. جرّب تقفل التطبيق وتفتحه تاني.',
+  ...arV3,
 } as const
 
 export type MsgKey = keyof typeof ar

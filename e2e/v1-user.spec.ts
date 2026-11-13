@@ -121,7 +121,7 @@ test('v1 user opens after the update: moved to the new system with data intact',
 
   // The database was upgraded in place: every v1 row is still there.
   expect(await readDb(page)).toEqual({
-    version: 20,
+    version: 30,
     flocks: [['قطيع السطح', 'chicken', 'chicken-broiler-white', 'roof-open', 300]],
     logs: 1,
     done: 1,

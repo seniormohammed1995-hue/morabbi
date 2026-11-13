@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { HashRouter, Link, Route, Routes, useLocation } from 'react-router-dom'
+import { HashRouter, Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BottomNav } from './ui/BottomNav'
 import { ToastHost } from './ui/kit'
@@ -13,6 +13,10 @@ import { refreshWeather } from './store/weather'
 import { RULES } from './data/rules'
 import { runWeatherAlerts } from './screens/weather/useWeather'
 import { WhatsNew } from './screens/WhatsNew'
+import { WhatsAppFab } from './screens/v3/parts'
+import { flushOutbox, pingUser } from './cloud/client'
+import { applyReminders, reminderRoute, webReminderTick } from './reminders'
+import { isNative, notifications, wireBackButton } from './platform'
 
 const Onboarding = lazy(() => import('./screens/Onboarding'))
 const FlocksScreen = lazy(() => import('./screens/Flocks'))
@@ -39,8 +43,20 @@ const Sick = lazy(() => import('./screens/tools/Sick'))
 const Scraps = lazy(() => import('./screens/tools/Scraps'))
 const Eggs = lazy(() => import('./screens/tools/Eggs'))
 const Brood = lazy(() => import('./screens/tools/Brood'))
+const Contact = lazy(() => import('./screens/v3/Contact'))
+const Join = lazy(() => import('./screens/v3/Join'))
+const Reminders = lazy(() => import('./screens/v3/Reminders'))
+const Journal = lazy(() => import('./screens/v3/Journal'))
+const Nutrition = lazy(() => import('./screens/v3/Nutrition'))
+const Android = lazy(() => import('./screens/v3/Android'))
 
 function UpdateBanner() {
+  // The Android app ships its files inside the APK; updates come with a new APK.
+  if (isNative()) return null
+  return <WebUpdateBanner />
+}
+
+function WebUpdateBanner() {
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -104,8 +120,33 @@ function useWeatherLoop() {
   }, [])
 }
 
+/**
+ * v3: reminders (Android schedules them; the web checks every minute while open),
+ * the cloud outbox (sent on start, when back online and every few minutes) and the back button.
+ */
+function useV3Loop() {
+  const nav = useNavigate()
+  useEffect(() => {
+    void notifications.init().then(() => applyReminders())
+    void wireBackButton()
+    notifications.onTap((id) => nav(reminderRoute(id)))
+    const sync = () => void pingUser().then(() => flushOutbox())
+    sync()
+    void webReminderTick()
+    const minute = setInterval(() => void webReminderTick(), 60_000)
+    const outbox = setInterval(sync, 5 * 60_000)
+    window.addEventListener('online', sync)
+    return () => {
+      clearInterval(minute)
+      clearInterval(outbox)
+      window.removeEventListener('online', sync)
+    }
+  }, [nav])
+}
+
 function MainApp() {
   useWeatherLoop()
+  useV3Loop()
   useEffect(() => {
     void runDailyReminder()
     void runBroodReminders()
@@ -138,10 +179,17 @@ function MainApp() {
           <Route path="/library/sources" element={<Sources />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/join" element={<Join />} />
+          <Route path="/reminders" element={<Reminders />} />
+          <Route path="/journal" element={<Journal />} />
+          <Route path="/nutrition" element={<Nutrition />} />
+          <Route path="/android" element={<Android />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
       <SickFab />
+      <WhatsAppFab />
       <BottomNav />
       <WhatsNew />
     </>

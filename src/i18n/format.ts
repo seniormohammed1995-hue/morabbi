@@ -55,3 +55,9 @@ export function parseNum(input: string): number | undefined {
   const n = Number(s)
   return Number.isFinite(n) ? n : undefined
 }
+
+/** Time of day like ٧:٠٥ (Arabic digits, two-digit minutes). */
+export function clock(d: Date): string {
+  const m = d.getMinutes()
+  return `${num(d.getHours())}:${m < 10 ? num(0) : ''}${num(m)}`
+}

@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportBackup, importBackup, resetAll } from '../db/repo'
-import { files, notifications, type PermissionState } from '../platform'
+import { device, files, notifications, type PermissionState } from '../platform'
 import { APP_VERSION } from '../config'
-import { openFeedback } from '../feedback'
 import { KINDS, profilesOf } from '../data/birds'
 import { toggleKind, useKinds } from '../db/birds'
 import { ALERT_TYPES, setAlertPref, useAlertPrefs } from '../store/weather'
@@ -15,6 +14,10 @@ import { t } from '../i18n'
 import { Button, Card, Choice, ConfirmDialog, cx, Page, PageHeader, SectionTitle, toast } from '../ui/kit'
 import { runDailyReminder } from './reminders'
 import { todayISO } from '../calc/dates'
+import { cloudEnabled, flushOutbox, useProfile, usePendingCount } from '../cloud/client'
+import { GOVERNORATES } from '../data/rules'
+import { num } from '../i18n/format'
+import { ApkCard, ContactBanner, ShareAppCard } from './v3/parts'
 
 const SCALES = [
   { value: '0.9', label: 'أ' },
@@ -36,10 +39,31 @@ export default function Settings() {
   const version = APP_VERSION
   const kinds = useKinds()
   const alertPrefs = useAlertPrefs()
+  const profile = useProfile()
+  const pending = usePendingCount()
+  const [sound, setSound] = useState(device.soundOn())
 
   return (
     <Page>
       <PageHeader title={t('settings.title')} back />
+
+      <SectionTitle icon="user">{t('set.profile')}</SectionTitle>
+      <Card>
+        {profile ? (
+          <p className="font-bold">
+            {t('join.hello', { name: profile.name })}
+            <span className="block text-sm font-normal text-muted">
+              {GOVERNORATES.find((g) => g.id === profile.governorate)?.name}
+              {profile.phone && <span dir="ltr"> · {profile.phone}</span>}
+            </span>
+          </p>
+        ) : (
+          <p className="text-muted">{t('set.profileEmpty')}</p>
+        )}
+        <Button variant="secondary" icon="edit" full className="mt-2" onClick={() => nav('/join')}>
+          {profile ? t('common.edit') : t('join.card.cta')}
+        </Button>
+      </Card>
 
       <section id="birds">
         <SectionTitle icon="flock">{t('set.birds')}</SectionTitle>
@@ -94,6 +118,32 @@ export default function Settings() {
       <SectionTitle>{t('settings.fontSize')}</SectionTitle>
       <Choice value={String(scale)} onChange={(v) => setScale(Number(v))} options={SCALES} />
 
+      <SectionTitle icon="bell">{t('set.reminders')}</SectionTitle>
+      <Button variant="secondary" icon="bell" full onClick={() => nav('/reminders')}>
+        {t('rem.sub')}
+      </Button>
+
+      <SectionTitle icon="volume">{t('set.sound')}</SectionTitle>
+      <Card>
+        <label className="flex min-h-12 items-center justify-between gap-3">
+          <span>
+            <span className="font-semibold">{t('set.sound')}</span>
+            <span className="block text-sm text-muted">{t('set.soundHint')}</span>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            className="h-6 w-6 accent-[var(--c-primary)]"
+            checked={sound}
+            onChange={(e) => {
+              device.setSound(e.target.checked)
+              setSound(e.target.checked)
+              if (e.target.checked) device.chime('ok')
+            }}
+          />
+        </label>
+      </Card>
+
       <SectionTitle>{t('settings.notifications')}</SectionTitle>
       <Card>
         <p className="mb-3 text-sm text-muted">{t('settings.notifications.hint')}</p>
@@ -139,16 +189,26 @@ export default function Settings() {
         </div>
       </Card>
 
-      <SectionTitle>{t('settings.feedback')}</SectionTitle>
-      <Card tone="leaf">
-        <p className="mb-3">{t('settings.feedbackBody')}</p>
-        <Button
-          icon="whatsapp"
-          onClick={() => void openFeedback(t('settings.title'))}
-        >
-          {t('settings.feedbackBtn')}
-        </Button>
+      <SectionTitle icon="cloud">{t('set.cloud')}</SectionTitle>
+      <Card>
+        <p className="text-sm">{cloudEnabled() ? t('set.cloudOn') : t('set.cloudOff')}</p>
+        {!!pending && (
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold text-warn">{t('set.pending', { n: num(pending) })}</span>
+            <Button
+              variant="secondary"
+              icon="refresh"
+              onClick={async () => toast(t('set.sent', { n: num(await flushOutbox()) }))}
+            >
+              {t('set.sendNow')}
+            </Button>
+          </div>
+        )}
       </Card>
+
+      <ContactBanner className="mt-5" />
+      <ShareAppCard className="mt-4" />
+      <ApkCard className="mt-4" />
 
       <SectionTitle>{t('settings.about')}</SectionTitle>
       <Card>
@@ -158,7 +218,7 @@ export default function Settings() {
         <BetaStrip className="mt-2" />
         <div className="mt-2 flex flex-wrap gap-x-4">
           <Button variant="ghost" className="px-0" onClick={() => nav('/about')}>
-            {t('set.aboutPage')}
+            {t('tools.about')}
           </Button>
           <Button variant="ghost" className="px-0" onClick={() => nav('/library/sources')}>
             {t('library.sources')}

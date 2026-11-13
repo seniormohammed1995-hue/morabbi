@@ -14,6 +14,7 @@ import { useWeatherView, todayExtremes, runWeatherAlerts, type Group } from './w
 import { WeatherBar } from './weather/WeatherBar'
 import { AlertCard } from './weather/AlertCard'
 import { ageText } from './groups/format'
+import { ApkCard, ContactBanner, JoinCard, ShareAppCard } from './v3/parts'
 
 export function HomeScreen() {
   const view = useWeatherView()
@@ -52,12 +53,19 @@ export function HomeScreen() {
         </Link>
       </header>
 
+      <div className="mb-4">
+        <JoinCard />
+      </div>
+
       {view && kinds && groups.length === 0 ? (
-        <EmptyState title={t('home2.empty.title')} body={t('home2.empty.body')}>
-          <Button icon="plus" full onClick={() => nav('/birds')}>
-            {t('home2.empty.cta')}
-          </Button>
-        </EmptyState>
+        <div className="space-y-4">
+          <EmptyState title={t('home2.empty.title')} body={t('home2.empty.body')}>
+            <Button icon="plus" full onClick={() => nav('/birds')}>
+              {t('home2.empty.cta')}
+            </Button>
+          </EmptyState>
+          <ContactBanner />
+        </div>
       ) : (
         <div className="space-y-4">
           <WeatherBar view={view} />
@@ -92,8 +100,13 @@ export function HomeScreen() {
               <ToolTile to="/scraps" icon="utensils" label={t('tools.scraps')} />
               {laying && <ToolTile to="/eggs" icon="egg" label={t('tools.eggs')} />}
               <ToolTile to="/brood" icon="hatch" label={t('tools.brood')} />
+              <ToolTile to="/nutrition" icon="feed" label={t('tools.nutrition')} />
+              <ToolTile to="/journal" icon="note" label={t('tools.journal')} />
+              <ToolTile to="/reminders" icon="bell" label={t('tools.reminders')} />
             </div>
           </section>
+
+          <ContactBanner />
 
           <section aria-labelledby="groups-h">
             <SectionTitle icon="flock">
@@ -122,6 +135,9 @@ export function HomeScreen() {
               {t('home2.addBirds')}
             </Button>
           </section>
+
+          <ShareAppCard />
+          <ApkCard />
         </div>
       )}
     </Page>

@@ -42,6 +42,31 @@ export const RULES = {
   rainProbabilityPct: 60,
   /** Egg counter: production is "down" when the last 7 days fall this % below the 7 days before. */
   eggDropPct: 25,
+  /**
+   * v3 reminders (app defaults the user can change, not breed data): water every N hours inside
+   * the waking window, feed at fixed times, and one evening "flock news" reminder.
+   */
+  reminders: {
+    waterEveryHours: 6,
+    waterEveryOptions: [3, 4, 6, 8],
+    dayStart: '06:00',
+    dayEnd: '22:00',
+    feedTimes: ['07:00', '17:00'],
+    maxFeedTimes: 4,
+    newsTime: '20:00',
+  },
+  /**
+   * Household scraps as a share of what the birds eat in a day (weight). Product guidance asked for
+   * by the owner; no published source gives a percentage (see DATA_REVIEW.md), so the UI shows it
+   * as an estimate next to the sourced "what they finish in 20 minutes" rule.
+   */
+  scrapsShareMaxPct: { min: 25, max: 30 },
+  /** Journal and feedback text limits (characters). */
+  maxNoteChars: 1000,
+  maxMessageChars: 1500,
+  /** Cloud outbox: retry a failed send after this many minutes; give up after this many tries. */
+  outboxRetryMinutes: 15,
+  outboxMaxTries: 20,
 } as const
 
 export type ClimateZone = 'coast' | 'delta' | 'upper' | 'desert'

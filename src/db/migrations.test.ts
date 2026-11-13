@@ -55,12 +55,12 @@ afterEach(async () => {
   await Dexie.delete('morabbi')
 })
 
-describe('Dexie v1 → v2 migration', () => {
+describe('Dexie v1 → v3 migration', () => {
   it('keeps every v1 row and links the flock to its bird profile', async () => {
     await seedV1()
     const { db } = await import('./index')
     await db.open()
-    expect(db.verno).toBe(2)
+    expect(db.verno).toBe(3)
     const flocks = await db.flocks.toArray()
     expect(flocks).toHaveLength(1)
     const f = flocks[0]!
@@ -78,13 +78,56 @@ describe('Dexie v1 → v2 migration', () => {
     await db.eggs.add({ flockId: f.id, date: '2026-11-01', count: 3 } as never)
     expect(await db.eggs.count()).toBe(1)
     expect(await db.broods.count()).toBe(0)
+    expect(await db.journal.count()).toBe(0)
   })
 
-  it('opens a fresh database at v2', async () => {
+  it('opens a fresh database at v3', async () => {
     const { db } = await import('./index')
     await db.open()
-    expect(db.verno).toBe(2)
+    expect(db.verno).toBe(3)
     expect(await db.flocks.count()).toBe(0)
+  })
+})
+
+/** Builds a database as v2.0 shipped it, with a group, eggs and a sitting. */
+async function seedV2(): Promise<void> {
+  const v2 = new Dexie('morabbi')
+  v2.version(1).stores({
+    flocks: '++id, status, speciesId, isDemo',
+    logs: '++id, flockId, &[flockId+date], date',
+    tasksDone: '++id, flockId, &[flockId+day+taskId]',
+    kv: 'key',
+  })
+  v2.version(2).stores({
+    flocks: '++id, status, speciesId, isDemo, kind',
+    eggs: '++id, flockId, &[flockId+date], date',
+    broods: '++id, status, flockId',
+  })
+  await v2.open()
+  const id = await v2
+    .table('flocks')
+    .add({ ...V1_FLOCK, kind: 'duck', profileId: 'duck-pekin', place: 'yard' })
+  await v2.table('eggs').add({ flockId: id, date: '2026-11-10', count: 4 })
+  await v2.table('broods').add({ kind: 'duck', profileId: 'duck-pekin', startDate: '2026-11-01', eggs: 8, status: 'sitting', createdAt: 1 })
+  await v2.table('kv').put({ key: 'kinds', value: ['duck'] })
+  v2.close()
+}
+
+describe('Dexie v2 → v3 migration', () => {
+  it('keeps every v2 row and adds the journal and outbox tables', async () => {
+    await seedV2()
+    const { db } = await import('./index')
+    await db.open()
+    expect(db.verno).toBe(3)
+    const [f] = await db.flocks.toArray()
+    expect(f).toMatchObject({ kind: 'duck', profileId: 'duck-pekin', place: 'yard' })
+    expect(await db.eggs.count()).toBe(1)
+    expect(await db.broods.count()).toBe(1)
+    expect((await db.kv.get('kinds'))?.value).toEqual(['duck'])
+    await db.journal.add({ date: '2026-11-13', at: 1, tag: 'note', text: 'تمام', flockId: f!.id } as never)
+    await db.outbox.add({ sheet: 'Users_Data', row: { a: 1 }, createdAt: 1, tries: 0, nextAt: 0 } as never)
+    expect(await db.journal.where('flockId').equals(f!.id).count()).toBe(1)
+    expect(await db.outbox.where('nextAt').belowOrEqual(5).count()).toBe(1)
   })
 })
 
