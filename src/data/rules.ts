@@ -18,6 +18,10 @@ export const RULES = {
   drawing: { windowWidthM: 1, padHeightM: 1.5, maxItems: 400 },
   /** Home-formula warnings: protein more than N points under target, energy under this ratio of target. */
   formulaWarn: { proteinPts: 1, energyRatio: 0.93 },
+  /** Show a vaccine as "upcoming" this many days ahead. */
+  vaccineSoonDays: 3,
+  /** Hide symptom-guide results scoring below this (0..1). */
+  symptomMinScore: 0.2,
   /** Max flock size the app supports in v1. */
   maxFlock: 5000,
 } as const

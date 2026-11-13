@@ -71,6 +71,7 @@ export default function Library() {
 
       <div className="mt-5 grid gap-2">
         <LinkCard to="/feeds" icon="feed" title={t('nav.feeds')} />
+        <LinkCard to="/health" icon="syringe" title={t('health.title')} />
         <LinkCard to="/library/sources" icon="info" title={t('library.sources')} />
       </div>
     </Page>

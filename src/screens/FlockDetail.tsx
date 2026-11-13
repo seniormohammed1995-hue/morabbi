@@ -122,6 +122,7 @@ export default function FlockDetail() {
             <LinkCard to={`/flocks/${flockId}/cycle`} icon="calendar" title={t('home.viewCycle')} />
             <LinkCard to={`/planner?flock=${flockId}`} icon="layout" title={t('flock.planner')} />
             <LinkCard to={`/feeds?flock=${flockId}`} icon="feed" title={t('nav.feeds')} />
+            <LinkCard to={`/health?flock=${flockId}`} icon="syringe" title={t('health.title')} />
           </div>
 
           <Card>

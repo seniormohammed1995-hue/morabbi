@@ -49,3 +49,14 @@ export function useFlockView(id: number | null | undefined): FlockView | null | 
   const metrics = flockMetrics(species.data, flock.initialCount, logs, age)
   return { flock, species, age, today, metrics, logs }
 }
+
+export const vacTaskId = (id: string) => `vac:${id}`
+
+/** Vaccination ids marked done for a flock. */
+export function useVaccinesDone(flockId: number | null | undefined): Set<string> | undefined {
+  return useLiveQuery(async () => {
+    if (!flockId) return new Set<string>()
+    const rows = await db.tasksDone.where('flockId').equals(flockId).toArray()
+    return new Set(rows.filter((r) => r.taskId.startsWith('vac:')).map((r) => r.taskId.slice(4)))
+  }, [flockId])
+}

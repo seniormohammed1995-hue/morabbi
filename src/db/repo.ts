@@ -110,6 +110,12 @@ export async function createDemoFlock(today = todayISO()): Promise<number> {
     alive -= deaths
   }
   await db.logs.bulkAdd(logs as DailyLog[])
+  // Past vaccinations in the demo were given on schedule.
+  await db.tasksDone.bulkAdd(
+    sp.health.vaccinations
+      .filter((v) => v.day < DEMO_AGE)
+      .map((v) => ({ flockId: id, day: v.day, taskId: `vac:${v.id}`, doneAt: Date.now() }) as never),
+  )
   return id
 }
 

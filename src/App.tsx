@@ -17,6 +17,7 @@ const Wizard = lazy(() => import('./screens/Wizard'))
 const Planner = lazy(() => import('./screens/Planner'))
 const Accounts = lazy(() => import('./screens/Accounts'))
 const Feeds = lazy(() => import('./screens/Feeds'))
+const Health = lazy(() => import('./screens/Health'))
 const Library = lazy(() => import('./screens/Library'))
 const SpeciesCard = lazy(() => import('./screens/SpeciesCard'))
 const Sources = lazy(() => import('./screens/Sources'))
@@ -95,6 +96,7 @@ export function App() {
             <Route path="/planner" element={<Planner />} />
             <Route path="/accounts" element={<Accounts />} />
             <Route path="/feeds" element={<Feeds />} />
+            <Route path="/health" element={<Health />} />
             <Route path="/library" element={<Library />} />
             <Route path="/library/species/:id" element={<SpeciesCard />} />
             <Route path="/library/sources" element={<Sources />} />

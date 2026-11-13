@@ -276,3 +276,34 @@ export const SourceRef = z.object({
   kind: z.enum(['breed-guide', 'fao', 'egypt-gov', 'university', 'regulation', 'app-rule']),
 })
 export type SourceRef = z.infer<typeof SourceRef>
+
+// ---------- Health ----------
+
+export const SymptomGroup = z.enum(['general', 'respiratory', 'digestive', 'nervous', 'legs', 'chicks'])
+export type SymptomGroup = z.infer<typeof SymptomGroup>
+
+export const Symptom = z.object({
+  id: z.string().min(1),
+  group: SymptomGroup,
+  label: LocalizedText,
+})
+export type Symptom = z.infer<typeof Symptom>
+
+export const Condition = z.object({
+  id: z.string().min(1),
+  name: LocalizedText,
+  groups: z.array(SpeciesGroup).min(1),
+  /** Weighted signs: 3 = hallmark, 2 = common, 1 = possible. */
+  signs: z.array(z.object({ symptom: z.string().min(1), weight: z.union([z.literal(1), z.literal(2), z.literal(3)]) })).min(2),
+  ageFrom: z.number().int().min(0),
+  ageTo: z.number().int().min(0),
+  urgency: z.enum(['vet-now', 'vet-soon', 'manage']),
+  notifiable: z.boolean(),
+  summary: LocalizedText,
+  actions: z.array(LocalizedText).min(1),
+  source: z.string().min(1),
+  sourceUrl: z.url(),
+  confidence: Confidence,
+  lastReviewed: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+})
+export type Condition = z.infer<typeof Condition>

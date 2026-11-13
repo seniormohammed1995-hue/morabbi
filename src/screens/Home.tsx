@@ -1,5 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useFlocks, useFlockView, useTasksDone } from '../db/hooks'
+import { useFlocks, useFlockView, useTasksDone, useVaccinesDone } from '../db/hooks'
+import { vaccineStatus } from '../calc/health'
+import { RULES } from '../data/rules'
 import { createDemoFlock } from '../db/repo'
 import { dayPlan } from '../calc/cycle'
 import { marketAgeDays } from '../calc/planner'
@@ -84,6 +86,7 @@ function FlockToday({ id }: { id: number }) {
   const view = useFlockView(id)
   const age = view?.age ?? 0
   const done = useTasksDone(id, age)
+  const vacDone = useVaccinesDone(id)
   const nav = useNavigate()
   if (!view) return null
   const { flock, species, metrics, today, logs } = view
@@ -91,6 +94,9 @@ function FlockToday({ id }: { id: number }) {
   const plan = dayPlan(sp, species.cycle, age, metrics.alive, flock.length * flock.width)
   const loggedToday = logs.some((l) => l.date === today)
   const market = marketAgeDays(sp)
+  const overdue = vaccineStatus(sp.health.vaccinations, age, vacDone ?? new Set(), RULES.vaccineSoonDays).filter(
+    (v) => v.state === 'overdue',
+  )
 
   return (
     <div className="space-y-4">
@@ -136,6 +142,18 @@ function FlockToday({ id }: { id: number }) {
       )}
 
       {age >= 0 && <AlertList alerts={metrics.alerts} />}
+      {vacDone &&
+        overdue.map((v) => (
+          <button
+            key={v.vaccination.id}
+            type="button"
+            onClick={() => nav(`/health?flock=${id}&tab=vaccines`)}
+            className="flex w-full gap-2 rounded-xl border border-danger/30 bg-danger-soft p-3 text-start text-sm font-semibold text-danger"
+          >
+            <Icon name="syringe" size={20} className="mt-0.5 shrink-0" />
+            {t('alert.vaccineOverdue', { name: lt(v.vaccination.disease), n: num(-v.daysUntil) })}
+          </button>
+        ))}
 
       <section>
         <SectionTitle icon="check">{t('home.tasks')}</SectionTitle>
@@ -161,6 +179,7 @@ function FlockToday({ id }: { id: number }) {
         <LinkCard to={`/flocks/${id}`} icon="chart" title={t('home.viewFlock')} />
         <LinkCard to={`/planner?flock=${id}`} icon="layout" title={t('flock.planner')} />
         <LinkCard to={`/feeds?flock=${id}`} icon="feed" title={t('nav.feeds')} />
+        <LinkCard to={`/health?flock=${id}`} icon="syringe" title={t('health.title')} />
       </div>
     </div>
   )

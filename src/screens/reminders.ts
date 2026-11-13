@@ -15,8 +15,10 @@ export async function keyEventsToday(): Promise<string[]> {
     if (!sp) continue
     const age = ageOn(f.placementDate, today)
     const plan = dayPlan(sp.data, sp.cycle, age, f.initialCount)
+    const tomorrow = dayPlan(sp.data, sp.cycle, age + 1, f.initialCount)
     const items = [
       ...plan.vaccinations.map((v) => `💉 ${lt(v.disease)}`),
+      ...tomorrow.vaccinations.map((v) => `${t('common.tomorrow')}: 💉 ${lt(v.disease)}`),
       ...plan.tasks.filter((x) => !x.daily).map((x) => lt(x.title)),
     ]
     if (items.length) lines.push(`${f.name}: ${items.join('، ')}`)

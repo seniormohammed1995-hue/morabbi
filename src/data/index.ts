@@ -1,5 +1,6 @@
 import { INGREDIENTS } from './ingredients'
-import { CycleTemplate, Ingredient, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { CONDITIONS, SYMPTOMS } from './health'
+import { Condition, CycleTemplate, Ingredient, Symptom, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
 import { broilerWhite } from './species/broiler-white'
 import { broilerWhiteCycle } from './cycles/broiler-white.cycle'
 import { ar } from './helpers'
@@ -40,6 +41,14 @@ export function getSpecies(id: string): SpeciesEntry | undefined {
 /** Validates every data file against the schema. Returns a list of human-readable errors. */
 export function validateAll(): string[] {
   const errors: string[] = []
+  const symptomIds = new Set(SYMPTOMS.map((s) => s.id))
+  for (const s of SYMPTOMS) if (!Symptom.safeParse(s).success) errors.push(`symptom ${s.id}: invalid`)
+  for (const c of CONDITIONS) {
+    const r = Condition.safeParse(c)
+    if (!r.success) for (const i of r.error.issues) errors.push(`condition ${c.id}: ${i.path.join('.')} — ${i.message}`)
+    for (const s of c.signs) if (!symptomIds.has(s.symptom)) errors.push(`condition ${c.id}: unknown symptom ${s.symptom}`)
+    if (c.ageFrom > c.ageTo) errors.push(`condition ${c.id}: ageFrom > ageTo`)
+  }
   for (const ing of INGREDIENTS) {
     const r = Ingredient.safeParse(ing)
     if (!r.success) for (const i of r.error.issues) errors.push(`ingredient ${ing.id}: ${i.path.join('.')} — ${i.message}`)

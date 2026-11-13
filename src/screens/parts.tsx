@@ -9,6 +9,7 @@ import { num, range } from '../i18n/format'
 import { Icon } from '../ui/Icon'
 import { Badge, Card, cx, SourceNote, Stat, Why } from '../ui/kit'
 import { toggleTask } from '../db/repo'
+import { vacTaskId } from '../db/hooks'
 
 export function alertText(a: Alert): string {
   const p = num(a.pct, a.kind === 'firstWeek' ? 1 : 0)
@@ -134,6 +135,25 @@ export function TaskList({
           </div>
           {v.note && <div className="mt-1 text-sm text-muted">{lt(v.note)}</div>}
           <div className="mt-2 text-xs font-semibold text-muted">{t('vet.warning')}</div>
+          {flockId && (
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={done?.has(vacTaskId(v.id)) ?? false}
+              className="mt-2 inline-flex min-h-10 items-center gap-2 rounded-lg bg-surface px-3 text-sm font-bold"
+              onClick={() => void toggleTask(flockId, plan.day, vacTaskId(v.id))}
+            >
+              <span
+                className={cx(
+                  'grid h-6 w-6 place-items-center rounded-md border-2',
+                  done?.has(vacTaskId(v.id)) ? 'border-leaf bg-leaf text-white' : 'border-line',
+                )}
+              >
+                {done?.has(vacTaskId(v.id)) && <Icon name="check" size={16} />}
+              </span>
+              {t('health.vac.markDone')}
+            </button>
+          )}
           <SourceNote item={v} />
         </li>
       ))}
