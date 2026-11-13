@@ -231,6 +231,32 @@ export const share = {
 
 let audio: AudioContext | null = null
 
+/**
+ * After a new version is deployed, the auto-updating service worker swaps the cache while an
+ * old page is still open; that page then asks for screen files that no longer exist and goes
+ * blank. Vite reports it as `vite:preloadError` — reload once to get the new version.
+ * Guarded so a real outage can't cause a reload loop (at most once a minute).
+ */
+export function reloadOnStaleBuild(): void {
+  window.addEventListener('vite:preloadError', (e) => {
+    const KEY = 'morabbi-stale-reload'
+    let last = 0
+    try {
+      last = Number(sessionStorage.getItem(KEY) || 0)
+    } catch {
+      /* storage blocked */
+    }
+    if (Date.now() - last < 60_000) return
+    try {
+      sessionStorage.setItem(KEY, String(Date.now()))
+    } catch {
+      /* storage blocked */
+    }
+    e.preventDefault()
+    window.location.reload()
+  })
+}
+
 export const device = {
   vibrate(ms: number): void {
     try {

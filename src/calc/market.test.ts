@@ -11,6 +11,9 @@ const base: MarketProduct = {
   whatsapp: false,
   price: '',
   popular: false,
+  art: 'incubator',
+  tags: [],
+  pick: false,
 }
 
 describe('market', () => {

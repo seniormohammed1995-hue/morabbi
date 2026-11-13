@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { getProfile, KINDS, profilesOf } from '../../data/birds'
 import { ECONOMY } from '../../data/nutrition'
 import { KITCHEN } from '../../data/kitchen'
+import { ProductNudge } from './ProductNudge'
 import { RULES } from '../../data/rules'
 import { SCRAP_ITEMS } from '../../data/scraps'
 import { WEATHER } from '../../data/weather'
@@ -429,6 +430,7 @@ function KitchenMixes() {
       </ul>
       <p className="mt-4 text-sm text-muted">{lt(KITCHEN.notTreatment.text)}</p>
       <SourceNote item={KITCHEN.notTreatment} />
+      <ProductNudge id="scale-10" className="mt-4" />
     </>
   )
 }

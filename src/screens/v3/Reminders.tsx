@@ -33,6 +33,7 @@ import {
   toast,
 } from '../../ui/kit'
 import { ApkCard } from './parts'
+import { ProductNudge } from './ProductNudge'
 
 const R = RULES.reminders
 const timeCls =
@@ -74,6 +75,7 @@ function RemindersForm({ initial, ctx }: { initial: ReminderSettings; ctx: CareC
   return (
     <Page>
       <PageHeader title={t('rem.title')} subtitle={t('rem.sub')} back />
+      <ProductNudge id="thermo-hygro" className="mb-3" />
 
       <Card tone={perm === 'granted' ? 'leaf' : 'warn'}>
         {perm === 'granted' ? (

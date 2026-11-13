@@ -28,6 +28,7 @@ import {
 } from '../../ui/kit'
 import { FeedbackCard } from '../Feedback'
 import { PLACES } from '../Onboarding'
+import { ProductNudge } from '../v3/ProductNudge'
 
 export default function Brood() {
   const broods = useBroods()
@@ -58,6 +59,7 @@ export default function Brood() {
               <BroodCard key={b.id} b={b} />
             ))}
           </div>
+          <ProductNudge id="incubator" className="mt-4" />
           {sitting.length > 0 && (
             <Button
               icon="plus"
