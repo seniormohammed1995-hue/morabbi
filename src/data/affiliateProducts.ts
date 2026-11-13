@@ -47,10 +47,18 @@ export interface MarketProduct {
   pick: boolean
 }
 
-/** Amazon.eg Associates tag (the developer's account). */
+/**
+ * Amazon.eg Associates tag (the developer's account).
+ * Search words checked against the live amazon.eg results on 2026-11-14: each link's first
+ * results are the product named here. Products amazon.eg doesn't sell have `NOT_ON_AMAZON`
+ * (no link → hidden) until you add a real seller link.
+ */
 export const AMAZON_TAG = 'bird0bb-21'
 
 /** Amazon.eg search link carrying the affiliate tag. */
+/** No seller link yet: the product stays hidden in the app. */
+const NOT_ON_AMAZON = ''
+
 export const amazon = (query: string): string =>
   `https://www.amazon.eg/s?k=${encodeURIComponent(query).replace(/%20/g, '+')}&tag=${AMAZON_TAG}`
 
@@ -91,11 +99,11 @@ export const PRODUCTS: MarketProduct[] = [
   p('incubator', 'heat', 'incubator', ['تفريخ في البيت'], false,
     'فقاسة بيض ديجيتال أوتوماتيك (24–56 بيضة)',
     'بتقلّب البيض لوحدها وبتظبط الحرارة، فتفقّسي بيض طيورك في البيت من غير ما تقعدي جنبها.',
-    amazon('فقاسة بيض اوتوماتيك')),
+    NOT_ON_AMAZON),
   p('ceramic-lamp', 'heat', 'lamp', ['شتا', 'تحضين'], false,
     'لمبة تدفئة سيراميك (100 وات)',
     'دفا للكتاكيت في الشتا من غير نور، فبتنام كويس بالليل.',
-    amazon('لمبة سيراميك حرارية')),
+    NOT_ON_AMAZON),
   p('red-lamp', 'heat', 'lamp', ['تحضين'], false,
     'لمبة تدفئة حمراء (انفراريد)',
     'دفا للكتاكيت والبط الصغير في التحضين. علّقيها بعيد عن الفرشة.',
@@ -109,15 +117,15 @@ export const PRODUCTS: MarketProduct[] = [
     'بيفصل الدفاية لما الجو يدفى ويشغّلها لما يبرد لوحده، فيوفّر كهربا وتعب.',
     amazon('STC-1000 thermostat')),
   p('ceramic-socket', 'heat', 'socket', ['أمان'], false,
-    'دواية خزف تتحمل الحرارة',
+    'دواية خزف E27 تتحمل الحرارة',
     'الدواية البلاستيك ممكن تسيح من لمبة التدفئة القوية؛ الخزف أأمن.',
-    amazon('دواية خزف حراري')),
+    amazon('E27 ceramic lamp holder')),
 
   // ---------- سقايات وعلافات ----------
   p('nipples', 'water', 'nipple', ['فرشة ناشفة'], true,
     'طقم نبل شرب أوتوماتيك بالكب (10 قطع)',
     'مية نضيفة من غير ما تتدلق، فالفرشة تفضل ناشفة.',
-    amazon('نبل سقايات دواجن')),
+    amazon('poultry nipple')),
   p('drinker', 'water', 'drinker', ['مية نضيفة'], false,
     'سقاية دواجن مقلوبة بيد (4 و 8 لتر)',
     'سهلة الغسيل والتعليق، والمية فيها بتفضل نضيفة أكتر من الطبق المكشوف.',
@@ -127,43 +135,43 @@ export const PRODUCTS: MarketProduct[] = [
     'الطيور ما تقدرش ترمي العلف على الأرض، فالشيكارة تقعد معاكي مدة أطول.',
     amazon('علافة دواجن')),
   p('float-valve', 'water', 'float', ['راحة بال'], false,
-    'عوامة مية أوتوماتيك صغيرة',
+    'عوامة مية (محبس عوامة)',
     'بتملى جردل أو خزان السقاية لوحدها أول ما المية تنقص.',
-    amazon('عوامة مياه صغيرة')),
+    amazon('float valve')),
   p('chick-feeder', 'water', 'tray', ['كتاكيت'], false,
     'طبق وعلافة تحضين كتاكيت عمر يوم',
     'واطية ومقسّمة علشان الكتاكيت الصغيرة تاكل بسهولة من غير ما تقف في الأكل.',
-    amazon('علافة تحضين كتاكيت')),
+    amazon('chick feeder tray')),
   p('pigeon-drinker', 'water', 'drinker', ['حمام', 'سمان'], false,
-    'سقاية حمام وسمان بفتحات جانبية',
-    'المية تفضل بعيد عن الزرق والريش.',
-    amazon('سقاية حمام')),
+    'سقاية أوتوماتيك للحمام والطيور الصغيرة',
+    'بتتعلّق في القفص والمية تفضل بعيد عن الزرق والريش.',
+    amazon('bird waterer')),
 
   // ---------- فيتامينات وإضافات ----------
   p('vit-ade', 'supplements', 'bottle', ['في المية'], false,
-    'فيتامين أ د3 هـ (AD3E) للطيور',
+    'فيتامينات ومعادن للطيور',
     'مكمّل فيتامينات بيتحط في المية أو العلف.',
-    amazon('فيتامين دواجن وطيور')),
+    amazon('فيتامينات طيور')),
   p('calcium', 'supplements', 'bottle', ['بياض'], false,
-    'كالسيوم وأملاح معدنية سائلة للطيور',
+    'كالسيوم ومعادن للطيور (عظم حبار وميكس معادن)',
     'للطيور اللي بتبيض، جنب العلف المتكامل.',
-    amazon('كالسيوم واملاح للطيور')),
+    amazon('calcium for birds')),
   p('toxin-binder', 'supplements', 'powder', ['تخزين العلف'], false,
     'مضاد سموم فطرية',
     'بيتخلط مع العلف، خصوصاً لو العلف بيتخزن في مكان رطب.',
-    amazon('مضاد سموم فطرية دواجن')),
+    NOT_ON_AMAZON),
   p('probiotic', 'supplements', 'powder', ['أمعاء'], false,
-    'خميرة وبروبيوتيك بيطري',
+    'بروبيوتيك للدواجن',
     'بكتيريا وخمائر نافعة للأمعاء بتتحط في المية أو العلف — شوف "خلطات من مطبخك" عن الخميرة.',
-    amazon('خميرة نشطة وبروبيوتيك')),
+    amazon('probiotic poultry')),
   p('vit-e-se', 'supplements', 'bottle', ['في المية'], false,
     'فيتامين هـ وسيلينيوم للطيور',
     'مكمّل فيتامين هـ وسيلينيوم بيتحط في المية.',
-    amazon('فيتامين هـ سيلينيوم للطيور')),
+    NOT_ON_AMAZON),
   p('electrolytes', 'supplements', 'powder', ['استقبال', 'حر'], false,
     'أملاح إماهة (إلكتروليت) للطيور',
     'بتتحط في مية الشرب يوم استقبال الكتاكيت وفي أيام الحر.',
-    amazon('الكتروليت دواجن')),
+    NOT_ON_AMAZON),
 
   // ---------- النضافة والفرشة ----------
   p('sprayer', 'hygiene', 'sprayer', ['تطهير'], false,
@@ -173,7 +181,7 @@ export const PRODUCTS: MarketProduct[] = [
   p('slat-floor', 'hygiene', 'floor', ['بط', 'فرشة ناشفة'], false,
     'أرضيات بلاستيك شبك للعشش والبط (50×50 سم)',
     'الطيور تقف فوق الشبك بعيد عن المية المدلوقة والزرق، فرجليها تفضل ناشفة.',
-    amazon('ارضيات بلاستيك للدواجن')),
+    NOT_ON_AMAZON),
   p('wood-shavings', 'hygiene', 'shavings', ['فرشة'], false,
     'نشارة خشب بيضا للفرشة',
     'بتشرب الرطوبة. اختاري النوع اللي من غير تراب كتير.',
@@ -185,11 +193,11 @@ export const PRODUCTS: MarketProduct[] = [
   p('mite-powder', 'hygiene', 'powder', ['فاش وقمل'], false,
     'بودرة أو بخاخ ضد الفاش والقمل للطيور',
     'لمكافحة الفاش والقمل على حسب تعليمات العبوة، وبعيد عن الأكل والمية.',
-    amazon('بودرة حشرات الطيور')),
+    NOT_ON_AMAZON),
   p('cleaning-set', 'hygiene', 'broom', ['نضافة'], false,
-    'طقم جاروف ومقشة لتنضيف الأقفاص',
+    'فرش تنضيف أقفاص الطيور',
     'يسهّل لمّ الزرق وتنضيف الأركان الضيقة في الأقفاص والعشة.',
-    amazon('ادوات تنظيف اقفاص الطيور')),
+    amazon('bird cage cleaning brush')),
 
   // ---------- الوزن والتجهيز والتهوية ----------
   p('scale-10', 'tools', 'scale', ['وزن أسبوعي', 'خلطات'], true,
@@ -201,9 +209,9 @@ export const PRODUCTS: MarketProduct[] = [
     'لوزن شكاير العلف والبط والرومي الكبير.',
     amazon('ميزان شنط ديجيتال 50 كيلو')),
   p('chopper', 'tools', 'chopper', ['بواقي البيت'], false,
-    'كبة فرم خضار يدوي',
+    'كبة فرم يدوي',
     'تفرمي بيها بواقي الخضار والعيش الناشف بسرعة (من غير بصل — شوف "بواقي البيت").',
-    amazon('كبة خضروات')),
+    amazon('manual food chopper')),
   p('timer', 'tools', 'timer', ['نور', 'شفاط'], false,
     'تايمر كهربا بفيشة (24 ساعة)',
     'يشغّل ويطفي النور أو الشفاط في مواعيد ثابتة حتى وإنتي برّه البيت.',
@@ -213,9 +221,9 @@ export const PRODUCTS: MarketProduct[] = [
     'يطلّع ريحة النشادر والرطوبة من العشة ويدخّل هوا نضيف.',
     amazon('شفاط هواء 6 بوصة')),
   p('cage', 'tools', 'cage', ['بلكونة', 'سطح'], false,
-    'قفص/بطارية تربية سلك مجلفن بدرج زرق',
+    'قفص معدن يتطوي بدرج تنضيف',
     'للتربية في البلكونة أو السطح: الدرج بيتشال ويتنضف بسهولة.',
-    amazon('قفص طيور كبير بدرج')),
+    amazon('pet cage cleaning drawer')),
 
   // ---------- كتاكيت وأعلاف (رعاة وموزعين) ----------
   // Add your local sponsors here, e.g.:

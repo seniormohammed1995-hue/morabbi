@@ -35,7 +35,7 @@ test('v3.2: kitchen mixes with sourced doses, the market, and the Gmail sign-in 
   // Market: Amazon products with the order button, the commission note and the VIP card.
   await page.goto('/#/market')
   await expect(page.getByRole('heading', { name: 'سوق طيور في بيتي' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /فقاسة بيض ديجيتال/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /ترمومتر ديجيتال/ })).toBeVisible()
   await expect(page.getByText(/شركاء أمازون/)).toBeVisible()
   expect(await page.getByRole('button', { name: /اطلب أونلاين/ }).count()).toBeGreaterThan(20)
   await expect(page.getByRole('button', { name: 'اطلب المتابعة الخاصة' })).toBeVisible()
