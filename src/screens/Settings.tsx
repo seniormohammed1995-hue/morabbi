@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportBackup, importBackup, resetAll } from '../db/repo'
-import { files, notifications, share, type PermissionState } from '../platform'
+import { files, notifications, type PermissionState } from '../platform'
+import { APP_VERSION } from '../config'
+import { openFeedback } from '../feedback'
+import { KINDS, profilesOf } from '../data/birds'
+import { toggleKind, useKinds } from '../db/birds'
+import { ALERT_TYPES, setAlertPref, useAlertPrefs } from '../store/weather'
+import { BirdArt } from '../ui/BirdArt'
+import { LocationPicker } from './weather/LocationPicker'
+import { BetaStrip } from './Onboarding'
 import { useUi, type Theme } from '../store/ui'
 import { t } from '../i18n'
-import { Button, Card, Choice, ConfirmDialog, Page, PageHeader, SectionTitle, toast } from '../ui/kit'
+import { Button, Card, Choice, ConfirmDialog, cx, Page, PageHeader, SectionTitle, toast } from '../ui/kit'
 import { runDailyReminder } from './reminders'
 import { todayISO } from '../calc/dates'
 
@@ -25,11 +33,55 @@ export default function Settings() {
   const [perm, setPerm] = useState<PermissionState>(notifications.state())
   const [confirm, setConfirm] = useState<null | 'import' | 'reset'>(null)
   const [pendingImport, setPendingImport] = useState<string | null>(null)
-  const version = __APP_VERSION__
+  const version = APP_VERSION
+  const kinds = useKinds()
+  const alertPrefs = useAlertPrefs()
 
   return (
     <Page>
       <PageHeader title={t('settings.title')} back />
+
+      <section id="birds">
+        <SectionTitle icon="flock">{t('set.birds')}</SectionTitle>
+        <p className="mb-2 text-sm text-muted">{t('set.birdsHint')}</p>
+        <div className="grid grid-cols-3 gap-2">
+          {KINDS.filter((k) => profilesOf(k).length > 0).map((k) => {
+            const on = kinds?.includes(k) ?? false
+            return (
+              <button
+                key={k}
+                type="button"
+                role="switch"
+                aria-checked={on}
+                onClick={() => void toggleKind(k, !on)}
+                className={cx('flex flex-col items-center rounded-2xl border-2 p-2 font-bold', on ? 'border-primary bg-primary-soft' : 'border-line bg-surface opacity-70')}
+              >
+                <BirdArt kind={k} size={44} />
+                {t(`kind.${k}`)}
+              </button>
+            )
+          })}
+        </div>
+        <Button variant="secondary" icon="plus" full className="mt-2" onClick={() => nav('/birds')}>
+          {t('set.addGroup')}
+        </Button>
+      </section>
+
+      <SectionTitle icon="pin">{t('set.location')}</SectionTitle>
+      <Card>
+        <LocationPicker />
+      </Card>
+
+      <SectionTitle icon="alert">{t('set.alerts')}</SectionTitle>
+      <Card>
+        <p className="mb-2 text-sm text-muted">{t('set.alertsHint')}</p>
+        {ALERT_TYPES.map((a) => (
+          <label key={a} className="flex min-h-12 items-center justify-between gap-3 border-b border-line last:border-0">
+            <span className="font-semibold">{t(`set.alert.${a}`)}</span>
+            <input type="checkbox" className="h-6 w-6 accent-[var(--c-primary)]" checked={alertPrefs?.[a] ?? true} onChange={(e) => void setAlertPref(a, e.target.checked)} />
+          </label>
+        ))}
+      </Card>
 
       <SectionTitle>{t('settings.theme')}</SectionTitle>
       <Choice<Theme>
@@ -92,7 +144,7 @@ export default function Settings() {
         <p className="mb-3">{t('settings.feedbackBody')}</p>
         <Button
           icon="whatsapp"
-          onClick={() => share.openExternal(`https://wa.me/?text=${encodeURIComponent(t('settings.feedbackMsg', { v: version }))}`)}
+          onClick={() => void openFeedback(t('settings.title'))}
         >
           {t('settings.feedbackBtn')}
         </Button>
@@ -103,10 +155,15 @@ export default function Settings() {
         <p className="font-bold">
           {t('app.name')} — {t('settings.version', { v: version })} ({t('app.beta')})
         </p>
-        <p className="mt-1 text-sm text-muted">{t('disclaimer.body')}</p>
-        <Button variant="ghost" className="mt-2 px-0" onClick={() => nav('/library/sources')}>
-          {t('library.sources')}
-        </Button>
+        <BetaStrip className="mt-2" />
+        <div className="mt-2 flex flex-wrap gap-x-4">
+          <Button variant="ghost" className="px-0" onClick={() => nav('/about')}>
+            {t('set.aboutPage')}
+          </Button>
+          <Button variant="ghost" className="px-0" onClick={() => nav('/library/sources')}>
+            {t('library.sources')}
+          </Button>
+        </div>
       </Card>
 
       <Button variant="danger" icon="trash" full className="mt-6" onClick={() => setConfirm('reset')}>

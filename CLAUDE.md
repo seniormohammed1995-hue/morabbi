@@ -11,6 +11,7 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - `npm test` — unit tests + `validate:data`
 - `npm run validate:data` — يتأكد إن كل ملفات البيانات مطابقة للـ schema
 - `npm run lint` / `npm run format`
+- `npm run e2e` — Playwright (مسارين: مستخدم جديد، ومستخدم v1 بعد التحديث). الجو متزيّف في `e2e/fixtures.ts`.
 - `npm run icons` — يولّد الأيقونات و splash من `public/favicon.svg`
 - النشر: GitHub Actions (`.github/workflows/deploy.yml`) على كل push لـ `main` → GitHub Pages، مع `BASE_PATH=/<repo>/`.
 
@@ -36,3 +37,6 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - الاسم: "طيور في بيتي" (قصير: "طيوري"). **اسم قاعدة البيانات `morabbi` ومفاتيح localStorage `morabbi-*` ثابتين عمداً** — تغييرهم يمسح بيانات المستخدمين.
 - أي تغيير في Dexie = `db.version(n+1)` + upgrade + test في `src/db/migrations.test.ts`.
 - خطة التحديث في `PLAN-v2.0.md`، والتغييرات في `CHANGELOG.md`.
+- السلالات في `src/data/birds/<kind>.ts` (schema `BirdProfile`، 8 بنود إجبارية) ومصادرها في `src/data/birds/sources/<kind>.ts`. بواقي البيت في `src/data/scraps.ts` وكل سلالة لازم تحكم على كل بند.
+- الجو بيمر من `src/platform/weather/` بس؛ الحسابات في `src/calc/weather.ts` والمعاملات في `src/data/weather.ts`.
+- رقم واتساب الآراء في `src/config.ts`.

@@ -5,10 +5,10 @@ import { cx } from './kit'
 
 const items: Array<{ to: string; icon: IconName; label: MsgKey; end?: boolean }> = [
   { to: '/', icon: 'home', label: 'nav.home', end: true },
-  { to: '/flocks', icon: 'flock', label: 'nav.flocks' },
-  { to: '/planner', icon: 'layout', label: 'nav.planner' },
-  { to: '/accounts', icon: 'calc', label: 'nav.accounts' },
+  { to: '/weather', icon: 'sun', label: 'nav.weather' },
+  { to: '/tools', icon: 'tools', label: 'nav.tools' },
   { to: '/library', icon: 'book', label: 'nav.library' },
+  { to: '/settings', icon: 'settings', label: 'nav.settings' },
 ]
 
 export function BottomNav() {

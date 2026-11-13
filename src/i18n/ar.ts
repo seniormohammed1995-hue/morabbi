@@ -1,5 +1,8 @@
+import { arV2 } from './ar-v2'
+
 /** Arabic (Egyptian) UI strings. Content text lives in src/data as LocalizedText. */
 export const ar = {
+  ...arV2,
   'app.name': 'طيور في بيتي',
   'app.shortName': 'طيوري',
   'app.tagline': 'دليلك لتربية الطيور في البيت يوم بيوم',
