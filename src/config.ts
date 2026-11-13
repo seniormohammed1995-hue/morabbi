@@ -21,7 +21,7 @@ export const CONFIG = {
    * (ends with .apps.googleusercontent.com) — the same ID works for the web and Android.
    * Steps in cloud/README.md. Empty = the Gmail button is hidden and sign-up stays as it is.
    */
-  googleClientId: '',
+  googleClientId: '539015984939-si19lqv3biqjmmgr58bv9g569cqaf0mm.apps.googleusercontent.com',
   /**
    * "سوق طيور في بيتي". Products and their links live in src/data/affiliateProducts.ts.
    * The market shows up only when at least one product has a link (or WhatsApp ordering).

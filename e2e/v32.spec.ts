@@ -16,7 +16,7 @@ async function onboard(page: Page) {
   await expect(page.getByRole('heading', { name: 'النهارده عند طيورك' })).toBeVisible()
 }
 
-test('v3.2: kitchen mixes with sourced doses, the market, and no Gmail button without a client id', async ({
+test('v3.2: kitchen mixes with sourced doses, the market, and the Gmail sign-in card', async ({
   page,
 }) => {
   // Keep sheet traffic out of the test.
@@ -40,8 +40,12 @@ test('v3.2: kitchen mixes with sourced doses, the market, and no Gmail button wi
   expect(await page.getByRole('button', { name: /اطلب أونلاين/ }).count()).toBeGreaterThan(20)
   await expect(page.getByRole('button', { name: 'اطلب المتابعة الخاصة' })).toBeVisible()
 
-  // Gmail sign-in stays hidden until googleClientId is set.
+  // Gmail sign-in: the card shows; with Google's script blocked it falls back to the offline note
+  // and the normal form still works.
+  await page.route('https://accounts.google.com/**', (r) => r.abort())
   await page.goto('/#/join')
   await expect(page.getByRole('heading', { name: 'عرّفنا بيك' })).toBeVisible()
-  await expect(page.getByText('ادخل بحساب Gmail بضغطة')).toHaveCount(0)
+  await expect(page.getByText('ادخل بحساب Gmail بضغطة')).toBeVisible()
+  await expect(page.getByText(/زرار Gmail محتاج نت/)).toBeVisible()
+  await expect(page.getByLabel('اسمك')).toBeVisible()
 })
