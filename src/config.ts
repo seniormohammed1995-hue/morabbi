@@ -9,12 +9,12 @@ export const CONFIG = {
    * Used by "ابعت رأيك" and "دردش معايا". Empty = WhatsApp opens and the user picks who to send to,
    * and the "chat with me directly" option is hidden. The number will be visible in the public code.
    */
-  feedbackWhatsapp: '',
+  feedbackWhatsapp: '201093633697',
   /**
    * Google Apps Script web-app URL (ends with /exec) — see cloud/README.md.
    * Empty = sign-up stays on the phone only, and messages go through WhatsApp instead.
    */
-  sheetsEndpoint: '',
+  sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbyxs_IGBSHXBLXlswnGbgLooNDWTkhaOB8FvTC8zcoiVdkhUCg5d6uCwrrZz_h_EdYqfA/exec',
   /** Public link of the web app (used in the share message). */
   appUrl: 'https://seniormohammed1995-hue.github.io/morabbi/',
   /** GitHub repository that builds the Android APK (owner/name). */

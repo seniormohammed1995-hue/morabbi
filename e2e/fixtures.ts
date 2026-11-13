@@ -43,4 +43,19 @@ export async function mockWeather(page: Page, opts?: { tempC?: number; rh?: numb
   await page.route('https://geocoding-api.open-meteo.com/**', (r) =>
     r.fulfill({ json: { results: [] } }),
   )
+  await mockCloud(page)
+}
+
+/**
+ * Answers the Google Sheets web app locally so tests never write to the real sheet.
+ * Returns the JSON bodies the app posted, in order.
+ */
+export async function mockCloud(page: Page) {
+  const posts: { sheet: string; row: Record<string, unknown> }[] = []
+  await page.route('https://script.google.com/**', async (r) => {
+    const body = r.request().postData()
+    if (body) posts.push(JSON.parse(body))
+    await r.fulfill({ json: { ok: true } })
+  })
+  return posts
 }

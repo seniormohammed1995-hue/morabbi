@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { mockWeather } from './fixtures'
+import { mockCloud, mockWeather } from './fixtures'
 
 /** Records window.open calls instead of opening WhatsApp. */
 async function captureOpen(page: Page) {
@@ -34,6 +34,7 @@ async function onboard(page: Page, name: string) {
 
 test('v3: sign-up, contact box, journal, reminders and the scraps guide', async ({ page }) => {
   await mockWeather(page, { tempC: 26, rh: 50 })
+  const posts = await mockCloud(page)
   await captureOpen(page)
 
   // A bad phone is caught on the welcome screen.
@@ -53,21 +54,28 @@ test('v3: sign-up, contact box, journal, reminders and the scraps guide', async 
   await expect(page.getByText('أهلاً يا أم أحمد')).toBeVisible()
   await expect(page.getByText('الجيزة').first()).toBeVisible()
 
-  // Contact box: with no sheet configured the message goes through WhatsApp.
+  // Sign-up reached the sheet as a Users_Data row.
+  await expect
+    .poll(() => posts.some((p) => p.sheet === 'Users_Data' && p.row.name === 'أم أحمد'))
+    .toBe(true)
+
+  // Contact box: the message goes to the Feedback_and_Reports sheet.
   await page.goto('/#/contact')
   await page.getByRole('radio', { name: 'اقتراح تطوير' }).click()
   await expect(page.getByLabel('رقمك علشان نرد عليك (اختياري)')).toHaveValue('01012345678')
-  await page.getByRole('button', { name: 'ابعت على واتساب' }).click()
+  await page.getByRole('button', { name: 'ابعت', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('اكتب رسالتك')
   await page.getByLabel('رسالتك').fill('عايز حاسبة للأرانب كمان')
-  await page.getByRole('button', { name: 'ابعت على واتساب' }).click()
-  await expect(page.getByText('شكراً ليك!')).toBeVisible()
-  const urls = await opened(page)
-  expect(urls).toHaveLength(1)
-  const text = decodeURIComponent(urls[0]!.split('text=')[1]!)
-  expect(text).toContain('اقتراح تطوير')
-  expect(text).toContain('عايز حاسبة للأرانب كمان')
-  expect(text).toContain('أم أحمد')
+  await page.getByRole('button', { name: 'ابعت', exact: true }).click()
+  await expect(page.getByText('رسالتك وصلت')).toBeVisible()
+  const sent = posts.find((p) => p.sheet === 'Feedback_and_Reports')
+  expect(sent?.row).toMatchObject({
+    type: 'suggestion',
+    message: 'عايز حاسبة للأرانب كمان',
+    name: 'أم أحمد',
+    phone: '01012345678',
+  })
+  expect(await opened(page)).toHaveLength(0)
 
   // Journal: an entry survives a reload.
   await page.goto('/#/journal')
@@ -89,7 +97,9 @@ test('v3: sign-up, contact box, journal, reminders and the scraps guide', async 
 
   // Nutrition: the household-scraps guide with its indicative share and sourced rule.
   await page.goto('/#/nutrition?tab=economy')
-  await expect(page.getByRole('heading', { name: 'التغذية الاقتصادية وبواقي أكل البيت' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'التغذية الاقتصادية وبواقي أكل البيت' }),
+  ).toBeVisible()
   await expect(page.getByText('رز مطبوخ')).toBeVisible()
   await expect(page.getByText(/٢٥ لـ ٣٠٪/)).toBeVisible()
   await expect(page.getByText(/20 دقيقة/).first()).toBeVisible()
@@ -98,7 +108,9 @@ test('v3: sign-up, contact box, journal, reminders and the scraps guide', async 
   await page.goto('/')
   await page.getByRole('button', { name: 'تواصل مع المطوّر' }).click()
   await expect(page.getByRole('dialog', { name: 'تواصل مع المطوّر' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'ابعت رأيك في تعليق سريع على واتساب' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: 'ابعت رأيك في تعليق سريع على واتساب' }),
+  ).toBeVisible()
 })
 
 test('v3: skipping the name shows the sign-up card, and the about page names the developer', async ({
