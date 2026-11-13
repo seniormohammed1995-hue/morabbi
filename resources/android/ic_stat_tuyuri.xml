@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for reminders: a white egg (Android tints it). Copied into the generated
+     Android project by .github/workflows/build-android.yml. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2.5C15.9,2.5 19.2,8.4 19.2,13.2A7.2,7.2 0,0 1,4.8 13.2C4.8,8.4 8.1,2.5 12,2.5Z" />
+</vector>

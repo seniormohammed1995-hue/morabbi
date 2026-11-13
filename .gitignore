@@ -32,4 +32,4 @@ test-results/
 playwright-report/
 
 # Capacitor Android project (generated in CI by build-android.yml)
-android/
+/android/
