@@ -22,6 +22,13 @@ export default function Tools() {
         <LinkCard to="/nutrition" icon="feed" title={t('tools.nutrition')} sub={t('tools.nutritionSub')} />
         <LinkCard to="/journal" icon="note" title={t('tools.journal')} sub={t('tools.journalSub')} />
         <LinkCard to="/reminders" icon="bell" title={t('tools.reminders')} sub={t('tools.remindersSub')} />
+        <LinkCard to="/schedule" icon="calendar" title={t('tools.schedule')} sub={t('tools.scheduleSub')} />
+        <LinkCard
+          to="/treatments"
+          icon="syringe"
+          title={t('tools.treatments')}
+          sub={t('tools.treatmentsSub')}
+        />
         <LinkCard to="/contact" icon="chat" title={t('tools.contact')} sub={t('tools.contactSub')} />
         <LinkCard to="/about" icon="info" title={t('tools.about')} />
       </div>

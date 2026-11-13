@@ -27,7 +27,8 @@ import {
   type AlertPrefs,
 } from '../../store/weather'
 import type { Forecast } from '../../platform/weather'
-import { notifications } from '../../platform'
+import { isNative, notifications } from '../../platform'
+import { scheduledWeatherIds } from '../../reminders'
 import { lt } from '../../i18n'
 
 export interface Group extends GroupCtx {
@@ -145,7 +146,10 @@ export async function runWeatherAlerts(): Promise<void> {
     today,
     fresh.map((a) => a.id),
   )
+  // On Android the scheduler already handed heat and cold alerts to the system.
+  const scheduled = isNative() ? await scheduledWeatherIds() : new Set<string>()
   for (const a of fresh) {
+    if (scheduled.has(a.id)) continue
     const adv = ALERT_ADVICE[a.type]
     await notifications.show(
       lt(adv.title),

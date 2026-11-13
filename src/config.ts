@@ -30,7 +30,7 @@ export const CONFIG = {
     github: 'https://github.com/seniormohammed1995-hue',
   },
   /** Shown in "إيه الجديد" once per version (major.minor). */
-  releaseKey: '3.0',
+  releaseKey: '3.1',
 } as const
 
 export const APP_VERSION: string = __APP_VERSION__

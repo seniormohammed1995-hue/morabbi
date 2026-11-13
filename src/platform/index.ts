@@ -3,10 +3,17 @@
  * On Android (Capacitor) notifications go through LocalNotifications (src/platform/native.ts)
  * so reminders fire while the app is closed; on the web they only fire while it is open.
  */
-import { isNative, nativeNotifications, platformName, type DailyNotification } from './native'
+import {
+  isNative,
+  nativeNotifications,
+  platformName,
+  type DailyNotification,
+  type NotificationTap,
+  type TimedNotification,
+} from './native'
 
 export { isNative, platformName, wireBackButton } from './native'
-export type { DailyNotification } from './native'
+export type { DailyNotification, NotificationTap, TimedNotification } from './native'
 
 export type PermissionState = 'granted' | 'denied' | 'default' | 'unsupported'
 
@@ -20,13 +27,17 @@ function tagId(tag: string): number {
   return 100_000 + (Math.abs(h) % 1_000_000)
 }
 
+/** Button texts for the Android reminder actions (set once from the i18n layer). */
+let actionLabels: { done: string; snooze: string } | undefined
+
 export const notifications = {
-  /** Call once on start (reads the Android permission). */
-  async init(): Promise<void> {
+  /** Call once on start (reads the Android permission). `labels` are the action-button texts. */
+  async init(labels?: { done: string; snooze: string }): Promise<void> {
     if (!isNative()) return
+    actionLabels = labels ?? actionLabels
     try {
       nativePerm = await nativeNotifications.permission()
-      if (nativePerm === 'granted') await nativeNotifications.ensureChannel()
+      if (nativePerm === 'granted') await nativeNotifications.ensureChannel(actionLabels)
     } catch {
       nativePerm = 'unsupported'
     }
@@ -44,7 +55,7 @@ export const notifications = {
     if (isNative()) {
       try {
         nativePerm = await nativeNotifications.request()
-        if (nativePerm === 'granted') await nativeNotifications.ensureChannel()
+        if (nativePerm === 'granted') await nativeNotifications.ensureChannel(actionLabels)
       } catch {
         nativePerm = 'unsupported'
       }
@@ -53,21 +64,35 @@ export const notifications = {
     if (!('Notification' in window)) return 'unsupported'
     return Notification.requestPermission()
   },
-  /** Replaces the repeating daily reminders (Android only; false on the web). */
-  async scheduleDaily(
-    items: DailyNotification[],
-    isReminderId: (id: number) => boolean,
+  /**
+   * Replaces everything the app scheduled with these daily and one-off notifications
+   * (Android only; false on the web, where nothing can fire while the app is closed).
+   */
+  async schedule(
+    daily: DailyNotification[],
+    timed: TimedNotification[],
+    ours: (id: number) => boolean,
   ): Promise<boolean> {
     if (!isNative() || nativePerm !== 'granted') return false
     try {
-      await nativeNotifications.replaceDaily(items, isReminderId)
+      await nativeNotifications.replaceAll(daily, timed, ours)
       return true
     } catch {
       return false
     }
   },
-  /** Runs `handler` with the notification id when the user taps one (Android). */
-  onTap(handler: (id: number) => void): void {
+  /** Adds one more timed notification, e.g. a snoozed reminder (Android only). */
+  async scheduleOne(n: TimedNotification, withActions = true): Promise<boolean> {
+    if (!isNative() || nativePerm !== 'granted') return false
+    try {
+      await nativeNotifications.scheduleOne(n, withActions)
+      return true
+    } catch {
+      return false
+    }
+  },
+  /** Runs `handler` when the user taps a notification or one of its buttons (Android). */
+  onTap(handler: (tap: NotificationTap) => void): void {
     if (isNative()) void nativeNotifications.onTap(handler).catch(() => undefined)
   },
   /** Shows a local notification now. Uses the service worker when available (required on Android Chrome). */

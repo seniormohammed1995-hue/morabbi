@@ -42,7 +42,13 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - رقم واتساب الآراء في `src/config.ts`.
 
 ## v3.0
-- التذكيرات: الحساب في `src/calc/reminders.ts`، الإعدادات والجدولة في `src/reminders.ts`، والإشعارات المتكررة على أندرويد في `src/platform/native.ts`. ids التذكيرات 1000–3999 محجوزة.
+- التذكيرات: الحساب في `src/calc/reminders.ts`، الإعدادات والجدولة في `src/reminders.ts`، والإشعارات المتكررة على أندرويد في `src/platform/native.ts`. ids التذكيرات اتغيرت في v3.1 (تحت).
 - السحابة: `src/cloud/payload.ts` (pure + tests) و `src/cloud/client.ts` (profile، outbox، feedback). السكربت في `cloud/apps-script/Code.gs` — أي عمود جديد يتضاف في المكانين.
 - الأندرويد: `capacitor.config.json` + `.github/workflows/build-android.yml` (tag `v*`)؛ فولدر `android/` متجاهَل وبيتعمل في CI. الشرح في `ANDROID.md`.
 - اللينكات والأرقام الشخصية في `src/config.ts` بس، والفاضي = الزرار مخفي.
+
+## v3.1
+- التذكيرات: الأنواع والمواعيد في `src/calc/reminders.ts`؛ النصوص في `src/data/care.ts` (كل جملة بمصدر)؛ المواعيد الافتراضية في `RULES.reminders`. المجدوِل `src/reminders.ts` (`applyReminders` للأندرويد، `webReminderTick` + `runCareDigest` للويب).
+- ids الإشعارات: 1000–7999 يومية، 20000+ رسالة الصبح، 30000+ الجو، 40000+ التأجيل (بدل 1000–3999).
+- جدول الرعاية: `src/calc/care.ts` (pure) بيقرا ملف السلالة؛ ممنوع أرقام جديدة فيه.
+- فترة السحب: الأيام من المستخدم بس — التطبيق ما يقترحش أيام سحب.

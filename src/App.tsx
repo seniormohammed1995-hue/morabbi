@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { HashRouter, Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import { BottomNav } from './ui/BottomNav'
@@ -6,16 +7,20 @@ import { ToastHost } from './ui/kit'
 import { Icon } from './ui/Icon'
 import { t } from './i18n'
 import { HomeScreen } from './screens/Home'
-import { runDailyReminder } from './screens/reminders'
+import { db } from './db'
 import { ensureV2Setup, onboarding } from './db/birds'
-import { runBroodReminders } from './db/broods'
 import { refreshWeather } from './store/weather'
 import { RULES } from './data/rules'
 import { runWeatherAlerts } from './screens/weather/useWeather'
 import { WhatsNew } from './screens/WhatsNew'
 import { WhatsAppFab } from './screens/v3/parts'
 import { flushOutbox, pingUser } from './cloud/client'
-import { applyReminders, reminderRoute, webReminderTick } from './reminders'
+import {
+  applyReminders,
+  handleNotificationTap,
+  runCareDigest,
+  webReminderTick,
+} from './reminders'
 import { isNative, notifications, wireBackButton } from './platform'
 
 const Onboarding = lazy(() => import('./screens/Onboarding'))
@@ -48,6 +53,8 @@ const Join = lazy(() => import('./screens/v3/Join'))
 const Reminders = lazy(() => import('./screens/v3/Reminders'))
 const Journal = lazy(() => import('./screens/v3/Journal'))
 const Nutrition = lazy(() => import('./screens/v3/Nutrition'))
+const CareSchedule = lazy(() => import('./screens/v3/CareSchedule'))
+const Treatments = lazy(() => import('./screens/v3/Treatments'))
 const Android = lazy(() => import('./screens/v3/Android'))
 
 function UpdateBanner() {
@@ -106,7 +113,11 @@ function SickFab() {
 /** Weather refresh on open, when the app comes back to the foreground, and every few hours. */
 function useWeatherLoop() {
   useEffect(() => {
-    const tick = () => void refreshWeather().then(() => runWeatherAlerts())
+    // A fresh forecast also reschedules the heat and cold alerts on the phone.
+    const tick = () =>
+      void refreshWeather()
+        .then(() => applyReminders())
+        .then(() => runWeatherAlerts())
     tick()
     const timer = setInterval(tick, RULES.weatherRefreshHours * 3_600_000)
     const onVisible = () => document.visibilityState === 'visible' && tick()
@@ -120,20 +131,40 @@ function useWeatherLoop() {
   }, [])
 }
 
+/** Changes whenever something the reminders depend on changes (birds, sittings, medicines). */
+function useCareStamp(): string | undefined {
+  return useLiveQuery(async () => {
+    const [flocks, broods, treatments, kinds] = await Promise.all([
+      db.flocks.toArray(),
+      db.broods.toArray(),
+      db.treatments.toArray(),
+      db.kv.get('kinds'),
+    ])
+    return JSON.stringify([
+      flocks.map((f) => [f.id, f.status, f.profileId, f.placementDate, f.purpose]),
+      broods.map((b) => [b.id, b.status, b.startDate]),
+      treatments.map((x) => [x.id, x.lastDose, x.eggDays, x.meatDays]),
+      kinds?.value,
+    ])
+  }, [])
+}
+
 /**
- * v3: reminders (Android schedules them; the web checks every minute while open),
+ * Reminders (Android schedules them; the web checks every minute while open),
  * the cloud outbox (sent on start, when back online and every few minutes) and the back button.
  */
 function useV3Loop() {
   const nav = useNavigate()
+  const stamp = useCareStamp()
   useEffect(() => {
-    void notifications.init().then(() => applyReminders())
+    void notifications.init({ done: t('rem.action.done'), snooze: t('rem.action.snooze') })
     void wireBackButton()
-    notifications.onTap((id) => nav(reminderRoute(id)))
+    notifications.onTap((tap) => void handleNotificationTap(tap, nav))
     const sync = () => void pingUser().then(() => flushOutbox())
     sync()
-    void webReminderTick()
-    const minute = setInterval(() => void webReminderTick(), 60_000)
+    const tick = () => void webReminderTick().then(() => runCareDigest())
+    tick()
+    const minute = setInterval(tick, 60_000)
     const outbox = setInterval(sync, 5 * 60_000)
     window.addEventListener('online', sync)
     return () => {
@@ -142,15 +173,15 @@ function useV3Loop() {
       window.removeEventListener('online', sync)
     }
   }, [nav])
+  // Reschedule on start and whenever the birds, sittings or medicines change.
+  useEffect(() => {
+    if (stamp !== undefined) void notifications.init().then(() => applyReminders())
+  }, [stamp])
 }
 
 function MainApp() {
   useWeatherLoop()
   useV3Loop()
-  useEffect(() => {
-    void runDailyReminder()
-    void runBroodReminders()
-  }, [])
   return (
     <>
       <Suspense fallback={<Loading />}>
@@ -185,6 +216,8 @@ function MainApp() {
           <Route path="/journal" element={<Journal />} />
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/android" element={<Android />} />
+          <Route path="/schedule" element={<CareSchedule />} />
+          <Route path="/treatments" element={<Treatments />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

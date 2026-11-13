@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { db, type Brood, type DailyLog, type EggLog, type Flock, type JournalEntry, type NewFlock, type NewLog } from './index'
+import { db, type Brood, type DailyLog, type EggLog, type Flock, type JournalEntry, type NewFlock, type NewLog, type Treatment } from './index'
 import { migrateFlockV2, type V1Flock } from './migrations'
 import { getSpecies } from '../data'
 import { addDays, ageOn, todayISO } from '../calc/dates'
@@ -126,7 +126,7 @@ export async function createDemoFlock(today = todayISO()): Promise<number> {
 
 // ---------- Backup ----------
 
-const BACKUP_VERSION = 3
+const BACKUP_VERSION = 4
 
 const BackupSchema = z.object({
   app: z.literal('morabbi'),
@@ -141,6 +141,7 @@ const BackupSchema = z.object({
   kinds: z.array(z.string()).optional(),
   // v3
   journal: z.array(z.record(z.string(), z.unknown())).optional(),
+  treatments: z.array(z.record(z.string(), z.unknown())).optional(),
 })
 
 async function blobToDataUrl(b: Blob): Promise<string> {
@@ -157,7 +158,7 @@ async function dataUrlToBlob(u: string): Promise<Blob> {
 }
 
 export async function exportBackup(): Promise<Blob> {
-  const [flocks, logs, tasksDone, eggs, broods, kinds, journal] = await Promise.all([
+  const [flocks, logs, tasksDone, eggs, broods, kinds, journal, treatments] = await Promise.all([
     db.flocks.toArray(),
     db.logs.toArray(),
     db.tasksDone.toArray(),
@@ -165,6 +166,7 @@ export async function exportBackup(): Promise<Blob> {
     db.broods.toArray(),
     db.kv.get('kinds'),
     db.journal.toArray(),
+    db.treatments.toArray(),
   ])
   const logsOut = await Promise.all(
     logs.map(async (l) => (l.photo ? { ...l, photo: await blobToDataUrl(l.photo) } : l)),
@@ -180,6 +182,7 @@ export async function exportBackup(): Promise<Blob> {
     broods,
     kinds: (kinds?.value as string[] | undefined) ?? [],
     journal,
+    treatments,
   }
   return new Blob([JSON.stringify(payload)], { type: 'application/json' })
 }
@@ -195,21 +198,22 @@ export async function importBackup(text: string): Promise<number> {
   // v1 backups have no kind/profile/place: upgrade them the same way the database migration does.
   const flocks = parsed.flocks.map((f) => ({ ...f, ...migrateFlockV2(f as unknown as V1Flock) }))
   const kinds = parsed.kinds ?? [...new Set(flocks.map((f) => f.kind))]
-  await db.transaction('rw', [db.flocks, db.logs, db.tasksDone, db.eggs, db.broods, db.kv, db.journal], async () => {
-    await Promise.all([db.flocks.clear(), db.logs.clear(), db.tasksDone.clear(), db.eggs.clear(), db.broods.clear(), db.journal.clear()])
+  await db.transaction('rw', [db.flocks, db.logs, db.tasksDone, db.eggs, db.broods, db.kv, db.journal, db.treatments], async () => {
+    await Promise.all([db.flocks.clear(), db.logs.clear(), db.tasksDone.clear(), db.eggs.clear(), db.broods.clear(), db.journal.clear(), db.treatments.clear()])
     await db.flocks.bulkAdd(flocks as unknown as Flock[])
     await db.logs.bulkAdd(logs as unknown as DailyLog[])
     await db.tasksDone.bulkAdd(parsed.tasksDone as never[])
     await db.eggs.bulkAdd((parsed.eggs ?? []) as unknown as EggLog[])
     await db.broods.bulkAdd((parsed.broods ?? []) as unknown as Brood[])
     await db.journal.bulkAdd((parsed.journal ?? []) as unknown as JournalEntry[])
+    await db.treatments.bulkAdd((parsed.treatments ?? []) as unknown as Treatment[])
     await db.kv.put({ key: 'kinds', value: kinds })
   })
   return parsed.flocks.length
 }
 
 export async function resetAll(): Promise<void> {
-  await Promise.all([db.flocks.clear(), db.logs.clear(), db.tasksDone.clear(), db.kv.clear(), db.eggs.clear(), db.broods.clear(), db.journal.clear(), db.outbox.clear()])
+  await Promise.all([db.flocks.clear(), db.logs.clear(), db.tasksDone.clear(), db.kv.clear(), db.eggs.clear(), db.broods.clear(), db.journal.clear(), db.outbox.clear(), db.treatments.clear()])
 }
 
 // ---------- CSV ----------

@@ -12,7 +12,7 @@ import { BetaStrip } from './Onboarding'
 import { useUi, type Theme } from '../store/ui'
 import { t } from '../i18n'
 import { Button, Card, Choice, ConfirmDialog, cx, Page, PageHeader, SectionTitle, toast } from '../ui/kit'
-import { runDailyReminder } from './reminders'
+import { applyReminders, runCareDigest } from '../reminders'
 import { todayISO } from '../calc/dates'
 import { cloudEnabled, flushOutbox, useProfile, usePendingCount } from '../cloud/client'
 import { GOVERNORATES } from '../data/rules'
@@ -159,7 +159,7 @@ export default function Settings() {
             onClick={async () => {
               const s = await notifications.request()
               setPerm(s)
-              if (s === 'granted') await runDailyReminder()
+              if (s === 'granted') await applyReminders().then(() => runCareDigest())
             }}
           >
             {t('settings.notifications.enable')}

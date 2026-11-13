@@ -60,7 +60,7 @@ describe('Dexie v1 → v3 migration', () => {
     await seedV1()
     const { db } = await import('./index')
     await db.open()
-    expect(db.verno).toBe(3)
+    expect(db.verno).toBe(4)
     const flocks = await db.flocks.toArray()
     expect(flocks).toHaveLength(1)
     const f = flocks[0]!
@@ -84,7 +84,7 @@ describe('Dexie v1 → v3 migration', () => {
   it('opens a fresh database at v3', async () => {
     const { db } = await import('./index')
     await db.open()
-    expect(db.verno).toBe(3)
+    expect(db.verno).toBe(4)
     expect(await db.flocks.count()).toBe(0)
   })
 })
@@ -118,7 +118,7 @@ describe('Dexie v2 → v3 migration', () => {
     await seedV2()
     const { db } = await import('./index')
     await db.open()
-    expect(db.verno).toBe(3)
+    expect(db.verno).toBe(4)
     const [f] = await db.flocks.toArray()
     expect(f).toMatchObject({ kind: 'duck', profileId: 'duck-pekin', place: 'yard' })
     expect(await db.eggs.count()).toBe(1)
@@ -128,6 +128,56 @@ describe('Dexie v2 → v3 migration', () => {
     await db.outbox.add({ sheet: 'Users_Data', row: { a: 1 }, createdAt: 1, tries: 0, nextAt: 0 } as never)
     expect(await db.journal.where('flockId').equals(f!.id).count()).toBe(1)
     expect(await db.outbox.where('nextAt').belowOrEqual(5).count()).toBe(1)
+  })
+})
+
+async function seedV3(): Promise<void> {
+  await seedV2()
+  const v3 = new Dexie('morabbi')
+  v3.version(1).stores({
+    flocks: '++id, status, speciesId, isDemo',
+    logs: '++id, flockId, &[flockId+date], date',
+    tasksDone: '++id, flockId, &[flockId+day+taskId]',
+    kv: 'key',
+  })
+  v3.version(2).stores({
+    flocks: '++id, status, speciesId, isDemo, kind',
+    eggs: '++id, flockId, &[flockId+date], date',
+    broods: '++id, status, flockId',
+  })
+  v3.version(3).stores({ journal: '++id, date, at, flockId', outbox: '++id, nextAt' })
+  await v3.open()
+  await v3.table('journal').add({ date: '2026-11-13', at: 1, tag: 'eggs', text: '١٢ بيضة' })
+  await v3.table('outbox').add({ sheet: 'Users_Data', row: { a: 1 }, createdAt: 1, tries: 0, nextAt: 0 })
+  await v3.table('kv').put({ key: 'reminders', value: { water: { on: true, everyHours: 4, from: '06:00', to: '22:00' } } })
+  v3.close()
+}
+
+describe('Dexie v3 → v4 migration', () => {
+  it('keeps every v3 row and adds the treatments table', async () => {
+    await seedV3()
+    const { db } = await import('./index')
+    await db.open()
+    expect(db.verno).toBe(4)
+    const [f] = await db.flocks.toArray()
+    expect(f).toMatchObject({ kind: 'duck', profileId: 'duck-pekin' })
+    expect(await db.journal.count()).toBe(1)
+    expect(await db.outbox.count()).toBe(1)
+    expect(await db.eggs.count()).toBe(1)
+    await db.treatments.add({ flockId: f!.id, name: 'مضاد حيوي', lastDose: '2026-11-10', eggDays: 7, createdAt: 1 } as never)
+    expect(await db.treatments.where('flockId').equals(f!.id).count()).toBe(1)
+  })
+
+  it('fills in the new reminder types for settings saved by v3.0', async () => {
+    await seedV3()
+    const { db } = await import('./index')
+    await db.open()
+    const { getReminderSettings } = await import('../reminders')
+    const s = await getReminderSettings()
+    expect(s.water.everyHours).toBe(4)
+    expect(s.temp.on).toBe(true)
+    expect(s.eggs.times.length).toBeGreaterThan(0)
+    expect(s.digest.on).toBe(true)
   })
 })
 

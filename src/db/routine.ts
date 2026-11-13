@@ -19,3 +19,13 @@ export async function toggleRoutine(date: string, id: string): Promise<void> {
     await db.kv.put({ key: key(date), value: [...cur] })
   })
 }
+
+/** Ticks a routine item (no-op when it is already ticked). */
+export async function markRoutine(date: string, id: string): Promise<void> {
+  await db.transaction('rw', db.kv, async () => {
+    const cur = new Set(((await db.kv.get(key(date)))?.value as string[] | undefined) ?? [])
+    if (cur.has(id)) return
+    cur.add(id)
+    await db.kv.put({ key: key(date), value: [...cur] })
+  })
+}

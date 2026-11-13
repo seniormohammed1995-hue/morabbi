@@ -5,6 +5,7 @@ import {
   nextReminder,
   parseTime,
   reminderSlots,
+  reminderTypeOf,
   type ReminderSettings,
 } from './reminders'
 
@@ -12,6 +13,12 @@ const settings = (over: Partial<ReminderSettings> = {}): ReminderSettings => ({
   water: { on: true, everyHours: 6, from: '06:00', to: '22:00' },
   feed: { on: true, times: ['17:00', '07:00'] },
   news: { on: true, time: '20:00' },
+  temp: { on: false, times: [] },
+  activity: { on: false, times: [] },
+  eggs: { on: false, times: [] },
+  litter: { on: false, times: [] },
+  digest: { on: true, time: '08:00' },
+  weather: { on: true },
   ...over,
 })
 
@@ -95,5 +102,34 @@ describe('dueReminders', () => {
   it('does not repeat what was already checked', () => {
     const now = new Date(2026, 10, 13, 18, 30)
     expect(dueReminders(slots, new Date(2026, 10, 13, 18, 15), now)).toEqual([])
+  })
+})
+
+describe('v3.1 check reminders', () => {
+  const full = settings({
+    temp: { on: true, times: ['08:00', '14:00'] },
+    activity: { on: true, times: ['09:00'] },
+    eggs: { on: true, times: ['10:30', '16:00'] },
+    litter: { on: true, times: ['18:30'] },
+  })
+
+  it('adds temperature, activity, egg and litter slots with their own id ranges', () => {
+    const s = reminderSlots(full)
+    expect(s.filter((x) => x.type === 'temp').map((x) => x.id)).toEqual([4000, 4001])
+    expect(s.find((x) => x.type === 'eggs' && x.hour === 10)?.minute).toBe(30)
+    expect(s.map((x) => reminderTypeOf(x.id))).toEqual(s.map((x) => x.type))
+    expect(new Set(s.map((x) => x.id)).size).toBe(s.length)
+  })
+
+  it('leaves out a type that does not apply to the birds kept', () => {
+    const s = reminderSlots(full, { eggs: false })
+    expect(s.some((x) => x.type === 'eggs')).toBe(false)
+    expect(s.some((x) => x.type === 'temp')).toBe(true)
+  })
+
+  it('knows which type an id belongs to', () => {
+    expect(reminderTypeOf(1002)).toBe('water')
+    expect(reminderTypeOf(7000)).toBe('litter')
+    expect(reminderTypeOf(20000)).toBeUndefined()
   })
 })

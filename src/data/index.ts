@@ -1,11 +1,12 @@
 import { INGREDIENTS } from './ingredients'
 import { CONDITIONS, SYMPTOMS } from './health'
-import { BirdProfile, Condition, CycleTemplate, Ingredient, Symptom, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { BirdProfile, Condition, CycleTemplate, Ingredient, Symptom, SourcedText, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
 import { PROFILES, KINDS } from './birds'
 import { SCRAP_ITEMS } from './scraps'
 import { broilerWhite } from './species/broiler-white'
 import { broilerWhiteCycle } from './cycles/broiler-white.cycle'
 import { ar } from './helpers'
+import { CARE_TEXTS } from './care'
 
 export interface SpeciesEntry {
   data: SpeciesData
@@ -64,6 +65,8 @@ export function validateAll(): string[] {
     errors.push(...consistency(entry))
   }
   errors.push(...validateProfiles())
+  for (const [i, c] of CARE_TEXTS.entries())
+    if (!SourcedText.safeParse(c).success) errors.push(`care text ${i}: invalid`)
   return errors
 }
 
@@ -145,5 +148,6 @@ export function lowConfidenceValues(): Array<{ speciesId: string; path: string; 
   for (const [id, e] of Object.entries(SPECIES)) walk(id, e.data, '')
   for (const p of PROFILES) walk(p.id, p, '')
   for (const ing of INGREDIENTS) walk('ingredients', ing, ing.id)
+  walk('care', CARE_TEXTS, '')
   return out
 }

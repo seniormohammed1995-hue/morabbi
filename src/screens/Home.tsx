@@ -15,6 +15,7 @@ import { WeatherBar } from './weather/WeatherBar'
 import { AlertCard } from './weather/AlertCard'
 import { ageText } from './groups/format'
 import { ApkCard, ContactBanner, JoinCard, ShareAppCard } from './v3/parts'
+import { NextUp } from './v3/NextUp'
 
 export function HomeScreen() {
   const view = useWeatherView()
@@ -74,6 +75,8 @@ export function HomeScreen() {
             <AlertCard key={a.id} alert={a} groups={groups} />
           ))}
 
+          <NextUp />
+
           <section aria-labelledby="routine-h">
             <SectionTitle icon="check">
               <span id="routine-h">{t('home2.routine')}</span>
@@ -103,6 +106,8 @@ export function HomeScreen() {
               <ToolTile to="/nutrition" icon="feed" label={t('tools.nutrition')} />
               <ToolTile to="/journal" icon="note" label={t('tools.journal')} />
               <ToolTile to="/reminders" icon="bell" label={t('tools.reminders')} />
+              <ToolTile to="/schedule" icon="calendar" label={t('tools.schedule')} />
+              <ToolTile to="/treatments" icon="syringe" label={t('tools.treatments')} />
             </div>
           </section>
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { WEATHER } from '../data/weather'
 import {
+  alertNotifyAt,
+  alertsAhead,
   buildAlerts,
   capAlerts,
   comfort,
@@ -189,5 +191,51 @@ describe('capAlerts', () => {
   it('counts alerts already shown today', () => {
     expect(capAlerts(a, all, ['humid:d'], 2).map((x) => x.type)).toEqual(['humid', 'heat'])
     expect(capAlerts(a, all, ['x', 'y'], 2)).toEqual([])
+  })
+})
+
+describe('alertsAhead / alertNotifyAt', () => {
+  const adult = { id: 1, profile: testProfile(), age: 60, place: 'roof-open' as const }
+  const chicks = { id: 2, profile: testProfile(), age: 3, place: 'room' as const }
+
+  it('finds one heat alert per day across the forecast', () => {
+    // Hot at 14:00–16:00 on each of three days.
+    const h = hours('2026-07-01T00:00', 72, (i) =>
+      i % 24 >= 14 && i % 24 <= 16 ? { tempC: 41, radWm2: 900 } : {},
+    )
+    const a = alertsAhead(h, [adult], '2026-07-01T08:00', P, W, LIMITS, 2)
+    expect(a.map((x) => x.id)).toEqual(['heat:2026-07-01', 'heat:2026-07-02', 'heat:2026-07-03'])
+    expect(a.every((x) => x.at.endsWith('T14:00'))).toBe(true)
+  })
+
+  it('ignores wind, rain and humidity (those stay in-app)', () => {
+    const h = hours('2026-03-01T00:00', 48, () => ({ gustKmh: 70, rh: 95 }))
+    expect(alertsAhead(h, [adult], '2026-03-01T06:00', P, W, LIMITS, 1)).toEqual([])
+  })
+
+  it('notifies about heat hours before, and about a cold night the evening before', () => {
+    const now = new Date(2026, 6, 1, 6, 0)
+    const heat = { id: 'heat:2026-07-01', type: 'heat', at: '2026-07-01T14:00' } as WeatherAlert
+    expect(alertNotifyAt(heat, now, 6, '17:00')).toEqual(new Date(2026, 6, 1, 8, 0))
+
+    const lateNight = { id: 'cold:2026-07-02', type: 'cold', at: '2026-07-02T02:00' } as WeatherAlert
+    expect(alertNotifyAt(lateNight, now, 6, '17:00')).toEqual(new Date(2026, 6, 1, 17, 0))
+    const evening = { id: 'cold:2026-07-01', type: 'cold', at: '2026-07-01T19:00' } as WeatherAlert
+    expect(alertNotifyAt(evening, now, 6, '17:00')).toEqual(new Date(2026, 6, 1, 17, 0))
+  })
+
+  it('never schedules in the past', () => {
+    const now = new Date(2026, 6, 1, 13, 0)
+    const heat = { id: 'heat:2026-07-01', type: 'heat', at: '2026-07-01T14:00' } as WeatherAlert
+    expect(alertNotifyAt(heat, now, 6, '17:00')).toEqual(new Date(2026, 6, 1, 13, 1))
+  })
+
+  it('schedules a cold night for chicks from the forecast', () => {
+    const h = hours('2026-01-10T00:00', 48, (i) =>
+      i % 24 >= 20 || i % 24 < 5 ? { tempC: 12, isDay: false } : {},
+    )
+    const a = alertsAhead(h, [chicks], '2026-01-10T09:00', P, W, LIMITS, 1)
+    expect(a[0]!.type).toBe('cold')
+    expect(a[0]!.groupIds).toEqual([2])
   })
 })

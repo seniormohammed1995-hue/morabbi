@@ -340,3 +340,62 @@ export function capAlerts(
   const room = Math.max(0, max - shownToday.length)
   return [...already, ...fresh.slice(0, room)].slice(0, max)
 }
+
+/** Shifts a local YYYY-MM-DDTHH:mm stamp to 00:00 `days` later. */
+function dayStartIso(nowIso: string, days: number): string {
+  const [y, m, d] = nowIso.slice(0, 10).split('-').map(Number)
+  const dt = new Date(y!, m! - 1, d! + days)
+  const p = (x: number) => String(x).padStart(2, '0')
+  return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}T00:00`
+}
+
+/**
+ * Heat and cold alerts for the rest of today and the following `days` days of the forecast
+ * (at most one per type per day), so they can be scheduled on the phone before they happen.
+ */
+export function alertsAhead(
+  hours: Hour[],
+  groups: GroupCtx[],
+  nowIso: string,
+  p: WeatherParams,
+  windows: Record<AlertType, number>,
+  limits: { gustKmh: number; rainProbPct: number },
+  days: number,
+): WeatherAlert[] {
+  const seen = new Map<string, WeatherAlert>()
+  for (let d = 0; d <= days; d++) {
+    const from = d === 0 ? nowIso : dayStartIso(nowIso, d)
+    for (const a of buildAlerts(hours, groups, from, p, windows, limits)) {
+      if ((a.type === 'heat' || a.type === 'cold') && !seen.has(a.id)) seen.set(a.id, a)
+    }
+  }
+  return [...seen.values()].sort((a, b) => a.at.localeCompare(b.at))
+}
+
+/**
+ * When to notify about an alert: heat `heatLeadHours` before the first hot hour; a cold night
+ * at `coldNotice` (HH:MM) on the evening before, while there is still time to prepare.
+ * Never earlier than a minute from `now`.
+ */
+export function alertNotifyAt(
+  a: WeatherAlert,
+  now: Date,
+  heatLeadHours: number,
+  coldNotice: string,
+): Date {
+  const [date, time] = a.at.split('T') as [string, string]
+  const [y, m, d] = date.split('-').map(Number)
+  const hour = Number(time.slice(0, 2))
+  let when: Date
+  if (a.type === 'cold') {
+    const [nh, nm] = coldNotice.split(':').map(Number)
+    // After midnight the cold night started the evening before.
+    when = new Date(y!, m! - 1, hour < 12 ? d! - 1 : d!, nh, nm)
+    const first = new Date(y!, m! - 1, d!, hour)
+    if (when > first) when = first
+  } else {
+    when = new Date(y!, m! - 1, d!, hour - heatLeadHours)
+  }
+  const soonest = new Date(now.getTime() + 60_000)
+  return when < soonest ? soonest : when
+}

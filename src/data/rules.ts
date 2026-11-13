@@ -43,17 +43,38 @@ export const RULES = {
   /** Egg counter: production is "down" when the last 7 days fall this % below the 7 days before. */
   eggDropPct: 25,
   /**
-   * v3 reminders (app defaults the user can change, not breed data): water every N hours inside
-   * the waking window, feed at fixed times, and one evening "flock news" reminder.
+   * Reminders (app defaults the user can change, not breed data). The sources say "water always
+   * available" and "check daily / twice daily" — the clock times here are ours.
+   * v3.0: water every N hours inside the waking window, feed times, evening "flock news".
+   * v3.1: temperature, activity, egg collection and litter checks; a morning digest of age-based
+   * events; weather alerts scheduled ahead; snooze.
    */
   reminders: {
     waterEveryHours: 6,
-    waterEveryOptions: [3, 4, 6, 8],
+    waterEveryOptions: [2, 3, 4, 6, 8],
     dayStart: '06:00',
     dayEnd: '22:00',
     feedTimes: ['07:00', '17:00'],
-    maxFeedTimes: 4,
     newsTime: '20:00',
+    tempTimes: ['08:00', '14:00'],
+    activityTimes: ['09:00', '18:00'],
+    eggsTimes: ['10:30', '16:00'],
+    litterTimes: ['18:30'],
+    /** Most times one reminder type can have. */
+    maxTimes: 4,
+    /** Above this many notifications a day the settings screen warns that it is a lot. */
+    busyPerDay: 14,
+    /** Morning digest of today's age-based events (feed change, warmth step, tasks, vaccination). */
+    digestTime: '08:00',
+    /** Days ahead scheduled on the phone each time the app opens. */
+    digestDaysAhead: 14,
+    /** Days shown on the care schedule screen. */
+    scheduleDays: 30,
+    /** Forecast days whose heat and cold alerts are scheduled on the phone ahead of time. */
+    weatherDaysAhead: 2,
+    /** A cold-night alert fires at this time on the evening before. */
+    coldNoticeTime: '17:00',
+    snoozeMinutes: 30,
   },
   /**
    * Household scraps as a share of what the birds eat in a day (weight). Product guidance asked for

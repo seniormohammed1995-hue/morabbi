@@ -109,6 +109,22 @@ export interface OutboxItem {
   lastError?: string
 }
 
+/** v3.1: a medicine course, kept to count down its withdrawal period (label values typed by the user). */
+export interface Treatment {
+  id: number
+  /** Group treated; undefined = all birds. */
+  flockId?: number
+  /** Medicine name as the user wrote it. */
+  name: string
+  /** Date of the last dose, YYYY-MM-DD. */
+  lastDose: string
+  /** Days to wait before eating eggs / meat, from the label or the vet. */
+  eggDays?: number
+  meatDays?: number
+  note?: string
+  createdAt: number
+}
+
 export interface KV {
   key: string
   value: unknown
@@ -123,6 +139,7 @@ export const db = new Dexie('morabbi') as Dexie & {
   broods: EntityTable<Brood, 'id'>
   journal: EntityTable<JournalEntry, 'id'>
   outbox: EntityTable<OutboxItem, 'id'>
+  treatments: EntityTable<Treatment, 'id'>
 }
 
 db.version(1).stores({
@@ -152,6 +169,11 @@ db.version(2)
 db.version(3).stores({
   journal: '++id, date, at, flockId',
   outbox: '++id, nextAt',
+})
+
+// v3.1: medicine withdrawal countdown. New table only; existing rows are untouched.
+db.version(4).stores({
+  treatments: '++id, flockId, lastDose',
 })
 
 export type NewFlock = Omit<Flock, 'id'>

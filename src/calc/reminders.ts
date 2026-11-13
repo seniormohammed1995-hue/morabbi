@@ -1,15 +1,33 @@
 /**
- * Periodic reminders (water, feed, flock news) as pure functions.
+ * Repeating daily reminders as pure functions: water, feed, flock news (v3.0) and
+ * temperature, activity, egg collection and litter checks (v3.1).
  * The platform layer turns the daily slots into repeating notifications (Android)
  * or checks them while the app is open (web).
  */
 
-export type ReminderType = 'water' | 'feed' | 'news'
+export type ReminderType = 'water' | 'feed' | 'news' | 'temp' | 'activity' | 'eggs' | 'litter'
+
+/** Reminder types that are a list of clock times. */
+export type TimedType = 'feed' | 'temp' | 'activity' | 'eggs' | 'litter'
+export const TIMED_TYPES: TimedType[] = ['feed', 'temp', 'activity', 'eggs', 'litter']
+
+export interface TimesSetting {
+  on: boolean
+  times: string[]
+}
 
 export interface ReminderSettings {
   water: { on: boolean; everyHours: number; from: string; to: string }
-  feed: { on: boolean; times: string[] }
+  feed: TimesSetting
   news: { on: boolean; time: string }
+  temp: TimesSetting
+  activity: TimesSetting
+  eggs: TimesSetting
+  litter: TimesSetting
+  /** One morning notification listing today's age-based events. */
+  digest: { on: boolean; time: string }
+  /** Heat and cold alerts scheduled ahead from the forecast. */
+  weather: { on: boolean }
 }
 
 export interface ReminderSlot {
@@ -20,7 +38,21 @@ export interface ReminderSlot {
   minute: number
 }
 
-const TYPE_BASE: Record<ReminderType, number> = { water: 1000, feed: 2000, news: 3000 }
+/** Id ranges: one thousand per type, 1000–7999 in all. */
+const TYPE_BASE: Record<ReminderType, number> = {
+  water: 1000,
+  feed: 2000,
+  news: 3000,
+  temp: 4000,
+  activity: 5000,
+  eggs: 6000,
+  litter: 7000,
+}
+
+export const reminderTypeOf = (id: number): ReminderType | undefined =>
+  (Object.keys(TYPE_BASE) as ReminderType[]).find(
+    (k) => id >= TYPE_BASE[k] && id < TYPE_BASE[k] + 1000,
+  )
 
 /** "HH:MM" → minutes after midnight, or null when malformed. */
 export function parseTime(s: string): number | null {
@@ -47,10 +79,15 @@ const slot = (type: ReminderType, index: number, minutes: number): ReminderSlot 
 /**
  * Daily reminder times, sorted by time of day.
  * Water: from `from` every `everyHours` while still at or before `to` (no reminders at night).
+ * `applicable` switches a type off when it makes no sense for the birds kept
+ * (egg collection with no laying birds).
  */
-export function reminderSlots(s: ReminderSettings): ReminderSlot[] {
+export function reminderSlots(
+  s: ReminderSettings,
+  applicable: Partial<Record<ReminderType, boolean>> = {},
+): ReminderSlot[] {
   const out: ReminderSlot[] = []
-  if (s.water.on && s.water.everyHours > 0) {
+  if (s.water.on && s.water.everyHours > 0 && applicable.water !== false) {
     const from = parseTime(s.water.from)
     const to = parseTime(s.water.to)
     if (from !== null && to !== null && to >= from) {
@@ -58,9 +95,11 @@ export function reminderSlots(s: ReminderSettings): ReminderSlot[] {
       for (let m = from, i = 0; m <= to; m += step, i++) out.push(slot('water', i, m))
     }
   }
-  if (s.feed.on) {
-    const times = [...new Set(s.feed.times.map(parseTime).filter((m): m is number => m !== null))]
-    times.sort((a, b) => a - b).forEach((m, i) => out.push(slot('feed', i, m)))
+  for (const type of TIMED_TYPES) {
+    const set = s[type]
+    if (!set.on || applicable[type] === false) continue
+    const times = [...new Set(set.times.map(parseTime).filter((m): m is number => m !== null))]
+    times.sort((a, b) => a - b).forEach((m, i) => out.push(slot(type, i, m)))
   }
   if (s.news.on) {
     const m = parseTime(s.news.time)
