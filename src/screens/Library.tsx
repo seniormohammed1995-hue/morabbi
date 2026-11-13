@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { CATALOGUE, getSpecies } from '../data'
+import { PROFILES } from '../data/birds'
+import { BirdArt } from '../ui/BirdArt'
+import { Link } from 'react-router-dom'
 import { GLOSSARY } from '../data/glossary'
 import { t, lt } from '../i18n'
 import { Icon } from '../ui/Icon'
@@ -17,13 +19,13 @@ const norm = (s: string) =>
 export default function Library() {
   const [q, setQ] = useState('')
   const nq = norm(q.trim())
-  const species = CATALOGUE.filter((c) => getSpecies(c.id))
-  const upcoming = CATALOGUE.filter((c) => !getSpecies(c.id))
   const terms = useMemo(
     () => (nq ? GLOSSARY.filter((g) => norm(lt(g.term)).includes(nq) || norm(lt(g.meaning)).includes(nq)) : GLOSSARY),
     [nq],
   )
-  const spMatch = nq ? species.filter((s) => norm(lt(s.name)).includes(nq) || norm(lt(getSpecies(s.id)!.data.description)).includes(nq)) : species
+  const spMatch = nq
+    ? PROFILES.filter((p) => norm(lt(p.name)).includes(nq) || norm(t(`kind.${p.kind}`)).includes(nq) || norm(lt(p.description)).includes(nq))
+    : PROFILES
 
   return (
     <Page>
@@ -41,20 +43,22 @@ export default function Library() {
       </label>
 
       {spMatch.length > 0 && <SectionTitle icon="flock">{t('library.species')}</SectionTitle>}
-      <div className="grid gap-2">
-        {spMatch.map((s) => (
-          <LinkCard key={s.id} to={`/library/species/${s.id}`} icon="flock" title={lt(s.name)} sub={lt(getSpecies(s.id)!.data.description)} />
+      <ul className="grid gap-2">
+        {spMatch.map((p) => (
+          <li key={p.id}>
+            <Link to={`/birds/profile/${p.id}`} className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+              <BirdArt kind={p.kind} size={40} />
+              <span className="min-w-0 flex-1">
+                <span className="flex flex-wrap items-center gap-2 font-bold">
+                  {t(`kind.${p.kind}`)} — {lt(p.name)}
+                  {p.dataStatus === 'limited' && <Badge tone="warn">{t('common.limitedData')}</Badge>}
+                </span>
+              </span>
+              <Icon name="chevron" size={18} className="text-muted" />
+            </Link>
+          </li>
         ))}
-      </div>
-      {!nq && upcoming.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {upcoming.map((u) => (
-            <Badge key={u.id}>
-              {lt(u.name)} — {t('wizard.comingSoon')}
-            </Badge>
-          ))}
-        </div>
-      )}
+      </ul>
 
       {terms.length > 0 && <SectionTitle icon="list">{t('library.glossary')}</SectionTitle>}
       <Card>

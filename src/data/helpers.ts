@@ -1,5 +1,6 @@
 import { SOURCES, type SourceId } from './sources'
-import type { AgePoint, AgeTable, Confidence, LocalizedText, SourcedValue } from './schema'
+import type { AgePoint, AgeTable, BirdKind, Confidence, LocalizedText, MixRule, ScrapRule, ScrapVerdict, SourcedText, SourcedValue } from './schema'
+import type { ScrapId } from './scraps'
 
 /** Date the values in the data files were last checked against their sources. */
 export const REVIEWED = '2026-11-13'
@@ -53,4 +54,22 @@ export function table(
     r.length === 4 ? { day: r[0], value: r[1], min: r[2], max: r[3] } : { day: r[0], value: r[1] },
   )
   return { points, ...provenance(unit, src, confidence, o) }
+}
+
+/** Builds a sourced statement. */
+export function st(text: string, src: SourceId, confidence: Confidence, reviewed = REVIEWED): SourcedText {
+  const s = SOURCES[src]
+  return { text: ar(text), source: s.title, sourceUrl: s.url, confidence, lastReviewed: reviewed }
+}
+
+/** Household-scrap verdict for a bird (item id from src/data/scraps.ts). */
+export function scrap(item: ScrapId, verdict: ScrapVerdict, reason: string, src: SourceId, confidence: Confidence): ScrapRule {
+  const s = SOURCES[src]
+  return { item, verdict, reason: ar(reason), source: s.title, sourceUrl: s.url, confidence }
+}
+
+/** "Don't keep with" rule. */
+export function avoidWith(kind: BirdKind, reason: string, src: SourceId, confidence: Confidence): MixRule {
+  const s = SOURCES[src]
+  return { kind, reason: ar(reason), source: s.title, sourceUrl: s.url, confidence }
 }

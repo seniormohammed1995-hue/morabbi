@@ -1,6 +1,8 @@
 import { INGREDIENTS } from './ingredients'
 import { CONDITIONS, SYMPTOMS } from './health'
-import { Condition, CycleTemplate, Ingredient, Symptom, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { BirdProfile, Condition, CycleTemplate, Ingredient, Symptom, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { PROFILES, KINDS } from './birds'
+import { SCRAP_ITEMS } from './scraps'
 import { broilerWhite } from './species/broiler-white'
 import { broilerWhiteCycle } from './cycles/broiler-white.cycle'
 import { ar } from './helpers'
@@ -61,7 +63,48 @@ export function validateAll(): string[] {
     if (entry.cycle.speciesId !== id) errors.push(`${id}.cycle: speciesId mismatch`)
     errors.push(...consistency(entry))
   }
+  errors.push(...validateProfiles())
   return errors
+}
+
+/** Bird profiles: schema, all 8 sections, full scrap coverage, contiguous age bands, every kind present. */
+export function validateProfiles(): string[] {
+  const e: string[] = []
+  const ids = new Set<string>()
+  for (const p of PROFILES) {
+    const r = BirdProfile.safeParse(p)
+    if (!r.success) for (const i of r.error.issues) e.push(`${p.id}: ${i.path.join('.')} — ${i.message}`)
+    if (ids.has(p.id)) e.push(`${p.id}: duplicate profile id`)
+    ids.add(p.id)
+    if (!p.id.startsWith(`${p.kind}-`)) e.push(`${p.id}: id must start with its kind`)
+    const covered = new Set(p.feeding.scraps.map((s) => s.item))
+    for (const s of SCRAP_ITEMS) if (!covered.has(s.id)) e.push(`${p.id}: feeding.scraps missing "${s.id}"`)
+    for (const s of p.feeding.scraps) if (!SCRAP_ITEMS.some((x) => x.id === s.item)) e.push(`${p.id}: unknown scrap "${s.item}"`)
+    const contiguous = (name: string, bands: Array<{ fromDay: number; toDay: number }>) => {
+      if (bands[0]!.fromDay !== 0) e.push(`${p.id}: ${name} must start at day 0`)
+      bands.forEach((b, i) => {
+        if (b.toDay < b.fromDay) e.push(`${p.id}: ${name}[${i}] toDay < fromDay`)
+        if (i > 0 && b.fromDay !== bands[i - 1]!.toDay + 1) e.push(`${p.id}: ${name} must be contiguous at [${i}]`)
+      })
+    }
+    contiguous('climate.bands', p.climate.bands)
+    contiguous('housing.space', p.housing.space)
+    contiguous('feeding.phases', p.feeding.phases)
+    const tpl = p.cycle.template
+    if (tpl.speciesId !== p.id) e.push(`${p.id}: cycle.template.speciesId mismatch`)
+    if (tpl.stages[0]!.fromDay !== -tpl.prepDays) e.push(`${p.id}: first stage must start at -prepDays`)
+    const tids = new Set<string>()
+    for (const t of tpl.tasks) {
+      if (tids.has(t.id)) e.push(`${p.id}: duplicate task ${t.id}`)
+      tids.add(t.id)
+      if (t.toDay < t.fromDay) e.push(`${p.id}: task ${t.id} toDay < fromDay`)
+    }
+    if (p.detailedId && !SPECIES[p.detailedId]) e.push(`${p.id}: unknown detailedId ${p.detailedId}`)
+    for (const c of p.breeding.checks) if (c.day > p.breeding.incubationDays.value + 40) e.push(`${p.id}: brood check ${c.id} too long after hatch`)
+    if (p.mixing.okWith.some((k) => p.mixing.avoid.some((a) => a.kind === k))) e.push(`${p.id}: kind both okWith and avoid`)
+  }
+  for (const k of KINDS) if (!PROFILES.some((p) => p.kind === k)) e.push(`kind ${k}: no profile`)
+  return e
 }
 
 /** Cross-field checks Zod can't express. */
@@ -100,6 +143,7 @@ export function lowConfidenceValues(): Array<{ speciesId: string; path: string; 
     for (const [k, v] of Object.entries(o)) walk(speciesId, v, path ? `${path}.${k}` : k)
   }
   for (const [id, e] of Object.entries(SPECIES)) walk(id, e.data, '')
+  for (const p of PROFILES) walk(p.id, p, '')
   for (const ing of INGREDIENTS) walk('ingredients', ing, ing.id)
   return out
 }

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { migrateFlockV2 } from '../db/migrations'
+import { toggleKind } from '../db/birds'
 import { useNavigate } from 'react-router-dom'
 import { CATALOGUE, getSpecies } from '../data'
 import type { HouseType, Purpose } from '../data/schema'
@@ -183,6 +185,7 @@ export default function Wizard() {
               const sp = entry!.data
               const id = await createFlock({
                 name: s.name.trim() || `${lt(sp.name)} — ${dateLong(s.placementDate)}`,
+                ...migrateFlockV2({ speciesId: s.speciesId, houseType: s.houseType }),
                 speciesId: s.speciesId,
                 purpose: s.purpose,
                 placementDate: s.placementDate,
@@ -197,6 +200,7 @@ export default function Wizard() {
                 isDemo: false,
                 createdAt: Date.now(),
               })
+              await toggleKind('chicken', true)
               select(id)
               nav('/', { replace: true })
             }}

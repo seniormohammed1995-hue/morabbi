@@ -1,7 +1,13 @@
 import type { SourceRef } from './schema'
+import { COMMON_SOURCES } from './birds/sources/common'
+import { CHICKEN_SOURCES } from './birds/sources/chicken'
+import { PIGEON_SOURCES } from './birds/sources/pigeon'
+import { QUAIL_SOURCES } from './birds/sources/quail'
+import { DUCK_SOURCES } from './birds/sources/duck'
+import { GOOSE_SOURCES } from './birds/sources/goose'
+import { TURKEY_SOURCES } from './birds/sources/turkey'
 
-/** Registry of every source cited by the data files. */
-export const SOURCES = {
+const BASE_SOURCES = {
   po22: {
     id: 'po22',
     title: 'Aviagen — Ross 308 Broiler Performance Objectives 2022 (As-Hatched)',
@@ -102,6 +108,18 @@ export const SOURCES = {
   fpFish: { id: 'fpFish', title: 'Feedipedia — Fish meal (type 62)', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/208', kind: 'fao' },
   fpLimestone: { id: 'fpLimestone', title: 'Feedipedia — Limestone', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/59', kind: 'fao' },
   fpMinerals: { id: 'fpMinerals', title: 'Feedipedia — Manufactured sources of minerals', publisher: 'Feedipedia', url: 'https://feedipedia.org/node/13729', kind: 'fao' },
+} as const satisfies Record<string, SourceRef>
+
+/** Registry of every source cited by the data files (base + one file per bird kind). */
+export const SOURCES = {
+  ...BASE_SOURCES,
+  ...COMMON_SOURCES,
+  ...CHICKEN_SOURCES,
+  ...PIGEON_SOURCES,
+  ...QUAIL_SOURCES,
+  ...DUCK_SOURCES,
+  ...GOOSE_SOURCES,
+  ...TURKEY_SOURCES,
 } as const satisfies Record<string, SourceRef>
 
 export type SourceId = keyof typeof SOURCES
