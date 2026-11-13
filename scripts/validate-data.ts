@@ -1,0 +1,11 @@
+/** Validates all species/cycle data against the Zod schema. Exits non-zero on errors. */
+import { validateAll, lowConfidenceValues, SPECIES } from '../src/data/index'
+
+const errors = validateAll()
+if (errors.length > 0) {
+  console.error(`✗ ${errors.length} data error(s):`)
+  for (const e of errors) console.error('  - ' + e)
+  process.exit(1)
+}
+const low = lowConfidenceValues()
+console.log(`✓ ${Object.keys(SPECIES).length} species valid. ${low.length} low-confidence value(s) (see DATA_REVIEW.md).`)

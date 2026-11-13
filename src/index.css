@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+@import '@fontsource/cairo/arabic-400.css';
+@import '@fontsource/cairo/arabic-600.css';
+@import '@fontsource/cairo/arabic-700.css';
+@import '@fontsource/cairo/arabic-800.css';
+@import '@fontsource/cairo/latin-400.css';
+@import '@fontsource/cairo/latin-700.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Cairo', system-ui, sans-serif;
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-ink: var(--c-ink);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-primary: var(--c-primary);
+  --color-primary-ink: var(--c-primary-ink);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-leaf: var(--c-leaf);
+  --color-leaf-soft: var(--c-leaf-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+}
+
+:root {
+  --c-bg: #fbf5ea;
+  --c-surface: #ffffff;
+  --c-surface-2: #f4ebdc;
+  --c-ink: #3a2a1e;
+  --c-muted: #6e5a48;
+  --c-line: #e6d8c3;
+  --c-primary: #b4532a;
+  --c-primary-ink: #ffffff;
+  --c-primary-soft: #f6e0d3;
+  --c-accent: #e9a23b;
+  --c-accent-soft: #fbecd2;
+  --c-leaf: #4f6b34;
+  --c-leaf-soft: #e3ead8;
+  --c-warn: #a65f00;
+  --c-warn-soft: #fbe9cc;
+  --c-danger: #b3261e;
+  --c-danger-soft: #f8dcd9;
+  color-scheme: light;
+}
+
+.dark {
+  --c-bg: #1e1915;
+  --c-surface: #2a231d;
+  --c-surface-2: #352c24;
+  --c-ink: #f3e9da;
+  --c-muted: #c2ae96;
+  --c-line: #4a3d31;
+  --c-primary: #e07a4c;
+  --c-primary-ink: #1e1915;
+  --c-primary-soft: #4a2d1f;
+  --c-accent: #f0b85c;
+  --c-accent-soft: #4a3a1e;
+  --c-leaf: #9dbb7a;
+  --c-leaf-soft: #2f3a24;
+  --c-warn: #f0b85c;
+  --c-warn-soft: #463619;
+  --c-danger: #ff8a80;
+  --c-danger-soft: #4d2320;
+  color-scheme: dark;
+}
+
+html {
+  font-size: calc(16px * var(--font-scale, 1));
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-ink);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  min-height: 100dvh;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
