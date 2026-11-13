@@ -18,6 +18,8 @@ concurrency:
 
 env:
   APK_NAME: morabbi-v3.apk
+  # Uploaded to Google Play by hand (Play Console → Release). Kept as a build artifact only.
+  AAB_NAME: tuyuri-play.aab
 
 jobs:
   apk:
@@ -85,6 +87,10 @@ jobs:
           "$BT/apksigner" sign --ks "$RUNNER_TEMP/release.jks" --ks-pass env:KEYSTORE_PASSWORD \
             --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASSWORD --out "$APK_NAME" aligned.apk
           "$BT/apksigner" verify "$APK_NAME"
+          # Google Play takes an App Bundle (.aab) signed with the same (upload) key.
+          (cd android && ./gradlew --no-daemon bundleRelease)
+          jarsigner -keystore "$RUNNER_TEMP/release.jks" -storetype PKCS12 -storepass:env KEYSTORE_PASSWORD -keypass:env KEY_PASSWORD -sigalg SHA256withRSA -digestalg SHA-256 -signedjar "$AAB_NAME" android/app/build/outputs/bundle/release/app-release.aab "$KEY_ALIAS"
+          jarsigner -verify "$AAB_NAME" | tail -1
           rm -f "$RUNNER_TEMP/release.jks"
 
       - name: Build debug APK (no signing secrets)
@@ -98,6 +104,14 @@ jobs:
         with:
           name: ${{ env.APK_NAME }}
           path: ${{ env.APK_NAME }}
+
+      - name: Upload Play bundle (artifact only)
+        if: ${{ env.HAS_KEY == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.AAB_NAME }}
+          path: ${{ env.AAB_NAME }}
+          retention-days: 30
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2

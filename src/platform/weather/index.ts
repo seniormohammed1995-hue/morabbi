@@ -2,6 +2,7 @@
  * Weather goes through here only. Swapping providers = adding a WeatherSource and
  * changing `weatherSource` below (see QUESTIONS.md for the licence question).
  */
+import { Capacitor } from '@capacitor/core'
 import { openMeteo } from './openMeteo'
 import type { Geocoder, WeatherSource } from './types'
 
@@ -11,8 +12,13 @@ export const weatherSource: WeatherSource = openMeteo
 export const geocoder: Geocoder = openMeteo
 
 export const geolocation = {
+  /** Off in the Android app: it asks for no location permission (governorate is enough). */
   supported(): boolean {
-    return typeof navigator !== 'undefined' && 'geolocation' in navigator
+    return (
+      !Capacitor.isNativePlatform() &&
+      typeof navigator !== 'undefined' &&
+      'geolocation' in navigator
+    )
   },
   /** Asks for the device position once. Resolves null if refused, unavailable or slow. */
   current(timeoutMs = 15000): Promise<{ lat: number; lon: number } | null> {

@@ -52,6 +52,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,webmanifest}'],
         navigateFallback: 'index.html',
+        // Static pages linked from Google Play must open as themselves, not as the app.
+        navigateFallbackDenylist: [/privacy\.html$/, /delete-data\.html$/],
         cleanupOutdatedCaches: true,
       },
     }),

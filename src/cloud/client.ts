@@ -8,6 +8,7 @@ import { cloud, device, platformName, share } from '../platform'
 import { t } from '../i18n'
 import { feedbackUrl } from '../feedback'
 import {
+  deleteRequest,
   feedbackRow,
   feedbackWhatsappText,
   newsRow,
@@ -67,7 +68,13 @@ export async function saveProfile(p: {
   }
   await db.kv.put({ key: KV_PROFILE, value: profile })
   if (cloudEnabled()) {
-    await enqueue(userRow({ ...profile, governorate: govName(profile.governorate) }, await envelope(), Date.now()))
+    await enqueue(
+      userRow(
+        { ...profile, governorate: govName(profile.governorate) },
+        await envelope(),
+        Date.now(),
+      ),
+    )
     await db.kv.put({ key: KV_PING, value: todayISO() })
     void flushOutbox()
   }
@@ -82,7 +89,11 @@ export async function pingUser(): Promise<void> {
   if ((await db.kv.get(KV_PING))?.value === today) return
   const kinds = await getKinds()
   await enqueue(
-    userRow({ ...p, kinds: kinds.length ? kinds : p.kinds, governorate: govName(p.governorate) }, await envelope(), Date.now()),
+    userRow(
+      { ...p, kinds: kinds.length ? kinds : p.kinds, governorate: govName(p.governorate) },
+      await envelope(),
+      Date.now(),
+    ),
   )
   await db.kv.put({ key: KV_PING, value: today })
 }
@@ -91,7 +102,13 @@ export async function pingUser(): Promise<void> {
 
 export async function enqueue(req: CloudRequest): Promise<void> {
   const now = Date.now()
-  await db.outbox.add({ sheet: req.sheet, row: req.row, createdAt: now, tries: 0, nextAt: now } as never)
+  await db.outbox.add({
+    sheet: req.sheet,
+    row: req.row,
+    createdAt: now,
+    tries: 0,
+    nextAt: now,
+  } as never)
 }
 
 export function usePendingCount(): number | undefined {
@@ -152,7 +169,9 @@ export async function sendFeedback(input: {
       gov: p ? govName(p.governorate) : '—',
       birds: kinds || '—',
     })
-    share.openExternal(feedbackUrl(feedbackWhatsappText(t(`contact.type.${input.type}`), input.message, footer)))
+    share.openExternal(
+      feedbackUrl(feedbackWhatsappText(t(`contact.type.${input.type}`), input.message, footer)),
+    )
     return 'whatsapp'
   }
   await enqueue(
@@ -189,9 +208,32 @@ export async function queueNews(entry: {
   if (!cloudEnabled() || (await db.kv.get(KV_NEWS_SYNC))?.value !== true) return false
   const p = await getProfile()
   await enqueue(
-    newsRow(entry, { name: p?.name ?? '', governorate: p ? govName(p.governorate) : '' }, await envelope(), Date.now()),
+    newsRow(
+      entry,
+      { name: p?.name ?? '', governorate: p ? govName(p.governorate) : '' },
+      await envelope(),
+      Date.now(),
+    ),
   )
   await db.journal.update(entry.id, { queuedAt: Date.now() })
   void flushOutbox()
   return true
+}
+
+// ---------- delete my data ----------
+
+/**
+ * Deletes the sign-up from this phone and asks the sheet to delete every row sent from this
+ * install (profile, messages, flock news). Rows still waiting to be sent are dropped first so
+ * they cannot re-create the data. A new install id is made afterwards.
+ * Returns 'sent' when the sheet confirmed, 'queued' when it will be sent once online.
+ */
+export async function requestDeletion(): Promise<'sent' | 'queued' | 'local'> {
+  const id = await clientId()
+  await db.outbox.clear()
+  await db.kv.bulkDelete([KV_PROFILE, KV_PING, KV_NEWS_SYNC, KV_CLIENT])
+  if (!cloudEnabled()) return 'local'
+  await enqueue(deleteRequest(id, Date.now()))
+  await flushOutbox()
+  return (await db.outbox.count()) === 0 ? 'sent' : 'queued'
 }

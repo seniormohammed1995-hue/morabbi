@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { exportBackup, importBackup, resetAll } from '../db/repo'
-import { device, files, notifications, type PermissionState } from '../platform'
+import { device, files, notifications, share, type PermissionState } from '../platform'
 import { APP_VERSION } from '../config'
 import { KINDS, profilesOf } from '../data/birds'
 import { toggleKind, useKinds } from '../db/birds'
@@ -11,10 +11,27 @@ import { LocationPicker } from './weather/LocationPicker'
 import { BetaStrip } from './Onboarding'
 import { useUi, type Theme } from '../store/ui'
 import { t } from '../i18n'
-import { Button, Card, Choice, ConfirmDialog, cx, Page, PageHeader, SectionTitle, toast } from '../ui/kit'
+import {
+  Button,
+  Card,
+  Choice,
+  ConfirmDialog,
+  cx,
+  Page,
+  PageHeader,
+  SectionTitle,
+  toast,
+} from '../ui/kit'
 import { applyReminders, runCareDigest } from '../reminders'
 import { todayISO } from '../calc/dates'
-import { cloudEnabled, flushOutbox, useProfile, usePendingCount } from '../cloud/client'
+import {
+  cloudEnabled,
+  flushOutbox,
+  requestDeletion,
+  useProfile,
+  usePendingCount,
+} from '../cloud/client'
+import { PRIVACY_URL } from '../config'
 import { GOVERNORATES } from '../data/rules'
 import { num } from '../i18n/format'
 import { ApkCard, ContactBanner, ShareAppCard } from './v3/parts'
@@ -35,6 +52,7 @@ export default function Settings() {
   const nav = useNavigate()
   const [perm, setPerm] = useState<PermissionState>(notifications.state())
   const [confirm, setConfirm] = useState<null | 'import' | 'reset'>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [pendingImport, setPendingImport] = useState<string | null>(null)
   const version = APP_VERSION
   const kinds = useKinds()
@@ -78,7 +96,10 @@ export default function Settings() {
                 role="switch"
                 aria-checked={on}
                 onClick={() => void toggleKind(k, !on)}
-                className={cx('flex flex-col items-center rounded-2xl border-2 p-2 font-bold', on ? 'border-primary bg-primary-soft' : 'border-line bg-surface opacity-70')}
+                className={cx(
+                  'flex flex-col items-center rounded-2xl border-2 p-2 font-bold',
+                  on ? 'border-primary bg-primary-soft' : 'border-line bg-surface opacity-70',
+                )}
               >
                 <BirdArt kind={k} size={44} />
                 {t(`kind.${k}`)}
@@ -100,9 +121,17 @@ export default function Settings() {
       <Card>
         <p className="mb-2 text-sm text-muted">{t('set.alertsHint')}</p>
         {ALERT_TYPES.map((a) => (
-          <label key={a} className="flex min-h-12 items-center justify-between gap-3 border-b border-line last:border-0">
+          <label
+            key={a}
+            className="flex min-h-12 items-center justify-between gap-3 border-b border-line last:border-0"
+          >
             <span className="font-semibold">{t(`set.alert.${a}`)}</span>
-            <input type="checkbox" className="h-6 w-6 accent-[var(--c-primary)]" checked={alertPrefs?.[a] ?? true} onChange={(e) => void setAlertPref(a, e.target.checked)} />
+            <input
+              type="checkbox"
+              className="h-6 w-6 accent-[var(--c-primary)]"
+              checked={alertPrefs?.[a] ?? true}
+              onChange={(e) => void setAlertPref(a, e.target.checked)}
+            />
           </label>
         ))}
       </Card>
@@ -112,7 +141,10 @@ export default function Settings() {
         value={theme}
         onChange={setTheme}
         cols={3}
-        options={(['light', 'dark', 'system'] as Theme[]).map((x) => ({ value: x, label: t(`settings.theme.${x}`) }))}
+        options={(['light', 'dark', 'system'] as Theme[]).map((x) => ({
+          value: x,
+          label: t(`settings.theme.${x}`),
+        }))}
       />
 
       <SectionTitle>{t('settings.fontSize')}</SectionTitle>
@@ -171,7 +203,13 @@ export default function Settings() {
       <Card>
         <p className="mb-3 text-sm text-muted">{t('settings.storage')}</p>
         <div className="grid gap-2">
-          <Button variant="secondary" icon="download" onClick={async () => files.save(await exportBackup(), `tuyuri-backup-${todayISO()}.json`)}>
+          <Button
+            variant="secondary"
+            icon="download"
+            onClick={async () =>
+              files.save(await exportBackup(), `tuyuri-backup-${todayISO()}.json`)
+            }
+          >
             {t('settings.export')}
           </Button>
           <Button
@@ -194,7 +232,9 @@ export default function Settings() {
         <p className="text-sm">{cloudEnabled() ? t('set.cloudOn') : t('set.cloudOff')}</p>
         {!!pending && (
           <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-warn">{t('set.pending', { n: num(pending) })}</span>
+            <span className="text-sm font-semibold text-warn">
+              {t('set.pending', { n: num(pending) })}
+            </span>
             <Button
               variant="secondary"
               icon="refresh"
@@ -204,6 +244,24 @@ export default function Settings() {
             </Button>
           </div>
         )}
+        <div className="mt-3 flex flex-wrap gap-x-4 border-t border-line pt-3">
+          <Button
+            variant="ghost"
+            icon="info"
+            className="px-0"
+            onClick={() => share.openExternal(PRIVACY_URL)}
+          >
+            {t('privacy.link')}
+          </Button>
+          <Button
+            variant="ghost"
+            icon="trash"
+            className="px-0 text-danger"
+            onClick={() => setConfirmDelete(true)}
+          >
+            {t('privacy.delete')}
+          </Button>
+        </div>
       </Card>
 
       <ContactBanner className="mt-5" />
@@ -226,9 +284,28 @@ export default function Settings() {
         </div>
       </Card>
 
-      <Button variant="danger" icon="trash" full className="mt-6" onClick={() => setConfirm('reset')}>
+      <Button
+        variant="danger"
+        icon="trash"
+        full
+        className="mt-6"
+        onClick={() => setConfirm('reset')}
+      >
         {t('settings.reset')}
       </Button>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        danger
+        title={t('privacy.delete.title')}
+        body={t('privacy.delete.body')}
+        confirmLabel={t('privacy.delete.confirm')}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={async () => {
+          setConfirmDelete(false)
+          toast(t(`privacy.deleted.${await requestDeletion()}`))
+        }}
+      />
 
       <ConfirmDialog
         open={confirm !== null}

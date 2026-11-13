@@ -18,7 +18,8 @@ vi.mock('../platform', async (orig) => {
 })
 
 const { db } = await import('../db')
-const { enqueue, flushOutbox, saveProfile, sendFeedback } = await import('./client')
+const { enqueue, flushOutbox, requestDeletion, saveProfile, sendFeedback } =
+  await import('./client')
 
 beforeEach(async () => {
   post.mockReset()
@@ -64,9 +65,36 @@ describe('profile and feedback', () => {
 
   it('reports "sent" when the sheet accepts the message and "queued" when offline', async () => {
     post.mockResolvedValueOnce({ ok: true })
-    expect(await sendFeedback({ type: 'case', message: 'الفراخ بتكح', phone: '', screen: 'x' })).toBe('sent')
+    expect(
+      await sendFeedback({ type: 'case', message: 'الفراخ بتكح', phone: '', screen: 'x' }),
+    ).toBe('sent')
     post.mockResolvedValueOnce({ ok: false, error: 'network' })
-    expect(await sendFeedback({ type: 'case', message: 'تاني', phone: '', screen: 'x' })).toBe('queued')
+    expect(await sendFeedback({ type: 'case', message: 'تاني', phone: '', screen: 'x' })).toBe(
+      'queued',
+    )
     expect(await db.outbox.count()).toBe(1)
+  })
+})
+
+describe('delete my data', () => {
+  it('drops pending rows, forgets the profile and asks the sheet to delete this install', async () => {
+    post.mockResolvedValueOnce({ ok: false, error: 'network' })
+    await saveProfile({ name: 'أحمد', phone: '', governorate: 'giza', kinds: ['chicken'] })
+    expect(await db.outbox.count()).toBe(1)
+    post.mockResolvedValueOnce({ ok: true })
+    expect(await requestDeletion()).toBe('sent')
+    const last = post.mock.calls.at(-1)![1] as { sheet: string; row: { client_id: string } }
+    expect(last.sheet).toBe('Delete')
+    expect(last.row.client_id).toBe('test-id')
+    expect(await db.outbox.count()).toBe(0)
+    expect(await db.kv.get('profile')).toBeUndefined()
+    expect(await db.kv.get('client-id')).toBeUndefined()
+  })
+
+  it('keeps the request for later when offline', async () => {
+    post.mockResolvedValue({ ok: false, error: 'network' })
+    expect(await requestDeletion()).toBe('queued')
+    const [row] = await db.outbox.toArray()
+    expect(row!.sheet).toBe('Delete')
   })
 })

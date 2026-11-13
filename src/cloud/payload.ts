@@ -9,6 +9,8 @@ export const SHEETS = {
   users: 'Users_Data',
   feedback: 'Feedback_and_Reports',
   news: 'Flock_News',
+  /** Not a tab: asks the script to delete every row of one install (see Code.gs). */
+  delete: 'Delete',
 } as const
 export type SheetName = (typeof SHEETS)[keyof typeof SHEETS]
 
@@ -138,10 +140,14 @@ export function newsRow(
 }
 
 /** Plain-text WhatsApp fallback for a feedback message when no sheet is set up. */
-export function feedbackWhatsappText(
-  typeLabel: string,
-  message: string,
-  footer: string,
-): string {
+export function feedbackWhatsappText(typeLabel: string, message: string, footer: string): string {
   return `【${typeLabel}】\n${message.trim()}\n\n${footer}`
+}
+
+/** Asks the sheet to remove everything sent from this install. */
+export function deleteRequest(clientId: string, now: number): CloudRequest {
+  return {
+    sheet: SHEETS.delete,
+    row: { client_id: clientId, requested_at: new Date(now).toISOString() },
+  }
 }

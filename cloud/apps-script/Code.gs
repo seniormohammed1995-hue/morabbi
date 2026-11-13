@@ -58,6 +58,10 @@ const TYPE_LABELS = {
   complaint: 'شكوى',
 };
 
+/** Log of deletion requests (no personal data: when, which install, how many rows). */
+const DELETION_LOG = 'Deletion_Log';
+const DELETION_COLUMNS = ['deleted_at', 'client_id', 'rows_removed'];
+
 const MAX_CELL = 2000;
 /** Per-install rate limit: at most this many rows every 10 minutes. */
 const MAX_ROWS_PER_10_MIN = 30;
@@ -67,6 +71,7 @@ function doPost(e) {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const tab = String(body.sheet || '');
     const row = body.row || {};
+    if (tab === 'Delete') return reply(deleteInstall(String(row.client_id || '')));
     if (!Object.prototype.hasOwnProperty.call(TABS, tab)) return reply({ ok: false, error: 'unknown sheet' });
     if (typeof row !== 'object' || Array.isArray(row)) return reply({ ok: false, error: 'bad row' });
     if (!allowed(String(row.client_id || 'anon'))) return reply({ ok: false, error: 'rate limited' });
@@ -162,6 +167,44 @@ function upsertUser(sheet, row) {
       return col === 'visits' ? 1 : clean(row[col]);
     }),
   );
+}
+
+/**
+ * "Delete my data" from the app: removes every row whose client_id matches, in every tab,
+ * and logs the request. Google Play requires a way for users to delete their data.
+ */
+function deleteInstall(clientId) {
+  const id = clean(clientId);
+  if (!id || id.length < 8) return { ok: false, error: 'missing client_id' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let removed = 0;
+    Object.keys(TABS).forEach(function (name) {
+      const sheet = ss.getSheetByName(name);
+      if (!sheet || sheet.getLastRow() < 2) return;
+      const col = TABS[name].indexOf('client_id') + 1;
+      const ids = sheet.getRange(2, col, sheet.getLastRow() - 1, 1).getValues();
+      // Bottom-up so row numbers stay valid while deleting.
+      for (let i = ids.length - 1; i >= 0; i--) {
+        if (String(ids[i][0]) === id) {
+          sheet.deleteRow(i + 2);
+          removed++;
+        }
+      }
+    });
+    let log = ss.getSheetByName(DELETION_LOG);
+    if (!log) {
+      log = ss.insertSheet(DELETION_LOG);
+      log.getRange(1, 1, 1, DELETION_COLUMNS.length).setValues([DELETION_COLUMNS]).setFontWeight('bold');
+      log.setFrozenRows(1);
+    }
+    log.appendRow([new Date().toISOString(), id, removed]);
+    return { ok: true, removed: removed };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 /** Run once from the editor (▶ setup) to create the tabs before the first user arrives. */

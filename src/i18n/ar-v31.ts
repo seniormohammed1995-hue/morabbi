@@ -107,4 +107,17 @@ export const arV31 = {
   'tools.treatments': 'الأدوية وفترة السحب',
   'tools.treatmentsSub': 'عدّ تنازلي لحد ما البيض واللحم ينفعوا',
   'tools.remindersSub': 'المية والحرارة والنشاط والأكل والبيض',
+
+  'apk.play': 'نزّله من Google Play',
+
+  // Privacy (Google Play)
+  'privacy.link': 'سياسة الخصوصية',
+  'privacy.delete': 'امسح بياناتي من عند المطوّر',
+  'privacy.delete.title': 'تمسح بياناتك؟',
+  'privacy.delete.body':
+    'هنمسح اسمك ورقمك ورسايلك وأخبار قطيعك اللي اتبعتت لجدول المطوّر، وهنمسح التسجيل من الموبايل ده. طيورك وسجلاتك على الموبايل مش هتتمسح. الخطوة دي مش بترجع.',
+  'privacy.delete.confirm': 'امسح',
+  'privacy.deleted.sent': 'اتمسحت بياناتك من عند المطوّر ✓',
+  'privacy.deleted.queued': 'اتمسحت من الموبايل، وطلب المسح هيتبعت أول ما النت يرجع.',
+  'privacy.deleted.local': 'اتمسح التسجيل من الموبايل ✓',
 } as const

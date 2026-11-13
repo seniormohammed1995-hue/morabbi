@@ -47,4 +47,10 @@
 
 **ما اتجرّبش:** الإشعارات المجدولة وأزرارها على موبايل أندرويد حقيقي (اتجرّبت الحسابات وواجهة الويب بس).
 
+## ✅ v3.1.1 — تجهيز Google Play — 2026-11-13
+
+**اتعمل:** AAB موقّع في `build-android.yml` (artifact)؛ `public/privacy.html` و `public/delete-data.html`؛ "امسح بياناتي" (`requestDeletion` + `deleteInstall` في `Code.gs` + سجل `Deletion_Log`)؛ إخفاء GPS في الأندرويد؛ `CONFIG.playStoreUrl`؛ نصوص المتجر وإجابات Play Console في `PLAY_STORE.md`؛ صور المتجر في `store/graphics/` (`npm run store:shots`). 132 unit test + 5 E2E.
+
+**لسه على المطوّر:** حساب Play Console (25$ + توثيق)، اختبار مغلق 12 مختبِر × 14 يوم، ونشر نسخة السكربت الجديدة (Deploy ← Manage deployments ← New version).
+
 ## ⏭️ الجاي: ملاحظات المجربين، ثم المرحلة 6 — الحسابات والجدوى والتقارير

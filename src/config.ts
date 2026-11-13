@@ -14,11 +14,17 @@ export const CONFIG = {
    * Google Apps Script web-app URL (ends with /exec) — see cloud/README.md.
    * Empty = sign-up stays on the phone only, and messages go through WhatsApp instead.
    */
-  sheetsEndpoint: 'https://script.google.com/macros/s/AKfycbyxs_IGBSHXBLXlswnGbgLooNDWTkhaOB8FvTC8zcoiVdkhUCg5d6uCwrrZz_h_EdYqfA/exec',
+  sheetsEndpoint:
+    'https://script.google.com/macros/s/AKfycbyxs_IGBSHXBLXlswnGbgLooNDWTkhaOB8FvTC8zcoiVdkhUCg5d6uCwrrZz_h_EdYqfA/exec',
   /** Public link of the web app (used in the share message). */
   appUrl: 'https://seniormohammed1995-hue.github.io/morabbi/',
   /** GitHub repository that builds the Android APK (owner/name). */
   githubRepo: 'seniormohammed1995-hue/morabbi',
+  /**
+   * Google Play page, once the app is published there (see PLAY_STORE.md). When set, the web
+   * "download for Android" card opens Play instead of the GitHub APK. Empty = GitHub APK.
+   */
+  playStoreUrl: '',
   /** APK file name attached to each GitHub release by .github/workflows/build-android.yml. */
   apkName: 'morabbi-v3.apk',
   developer: {
@@ -37,4 +43,7 @@ export const APP_VERSION: string = __APP_VERSION__
 
 /** Direct download of the newest APK (GitHub serves the latest release's asset at this stable URL). */
 export const APK_URL = `https://github.com/${CONFIG.githubRepo}/releases/latest/download/${CONFIG.apkName}`
+/** Privacy policy and data-deletion pages (served from public/, also linked on Google Play). */
+export const PRIVACY_URL = `${CONFIG.appUrl}privacy.html`
+export const DELETE_DATA_URL = `${CONFIG.appUrl}delete-data.html`
 export const RELEASES_URL = `https://github.com/${CONFIG.githubRepo}/releases/latest`

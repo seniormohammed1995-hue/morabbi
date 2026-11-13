@@ -52,3 +52,4 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - ids الإشعارات: 1000–7999 يومية، 20000+ رسالة الصبح، 30000+ الجو، 40000+ التأجيل (بدل 1000–3999).
 - جدول الرعاية: `src/calc/care.ts` (pure) بيقرا ملف السلالة؛ ممنوع أرقام جديدة فيه.
 - فترة السحب: الأيام من المستخدم بس — التطبيق ما يقترحش أيام سحب.
+- Google Play: `PLAY_STORE.md` (الخطوات والإجابات)، صفحات `public/privacy.html` و `public/delete-data.html` (لازم يفضلوا متاحين؛ متشالين من navigateFallback)، صور المتجر `npm run store:shots`. نسخة Play ممنوع فيها أي تحميل أو تحديث APK من برّه المتجر (`ApkCard` مخفي على native).

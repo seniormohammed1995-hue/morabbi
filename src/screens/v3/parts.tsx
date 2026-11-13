@@ -103,14 +103,25 @@ export function ApkCard({ className }: { className?: string }) {
           <p className="text-sm text-muted">{t('apk.why')}</p>
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button icon="download" onClick={() => share.openExternal(APK_URL)}>
-          {t('apk.download')}
+      {CONFIG.playStoreUrl ? (
+        <Button
+          icon="android"
+          full
+          className="mt-3"
+          onClick={() => share.openExternal(CONFIG.playStoreUrl)}
+        >
+          {t('apk.play')}
         </Button>
-        <Button variant="secondary" onClick={() => nav('/android')}>
-          {t('apk.steps')}
-        </Button>
-      </div>
+      ) : (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button icon="download" onClick={() => share.openExternal(APK_URL)}>
+            {t('apk.download')}
+          </Button>
+          <Button variant="secondary" onClick={() => nav('/android')}>
+            {t('apk.steps')}
+          </Button>
+        </div>
+      )}
     </Card>
   )
 }
