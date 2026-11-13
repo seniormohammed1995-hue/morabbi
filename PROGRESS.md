@@ -13,7 +13,7 @@
 - GitHub Actions للنشر على Pages.
 
 **اتأجل / ناقص:**
-- النشر الفعلي: `gh` مش متسجّل دخول → الخطوات في `QUESTIONS.md`.
+- ~~النشر الفعلي~~ ✅ اتنشر على https://seniormohammed1995-hue.github.io/morabbi/
 - Lighthouse و E2E (Playwright) → المرحلة 8.
 - الإشعارات بتطلع وقت فتح التطبيق بس (قيد الـ PWA).
 

@@ -1,24 +1,8 @@
 # أسئلة محتاجة قرار منك
 
-## 1) النشر على GitHub Pages (محتاج حسابك)
+## 1) ~~النشر على GitHub Pages~~ ✅ اتحل 2026-11-13
 
-`gh` مش متسجّل دخول على الجهاز، فما قدرتش أعمل repo وأنشر. كل حاجة جاهزة (`.github/workflows/deploy.yml`). علشان يطلع لينك:
-
-```bash
-gh auth login
-```
-
-```bash
-gh repo create morabbi --public --source=. --remote=origin --push
-```
-
-```bash
-gh api -X POST repos/{owner}/morabbi/pages -f build_type=workflow
-```
-
-بعدها كل push على `main` هينشر تلقائياً على: `https://<اسم-حسابك>.github.io/morabbi/`
-
-> ملحوظة: GitHub Pages المجاني محتاج الـ repo يكون **public** (أو حساب مدفوع للـ private). لو عايزه private قولي.
+اللينك: https://seniormohammed1995-hue.github.io/morabbi/ — الكود: https://github.com/seniormohammed1995-hue/morabbi (public). كل push على `main` بينشر تلقائياً. الـ commits بإيميل GitHub الـ noreply مش الإيميل الشخصي.
 
 ## 2) رقم واتساب لاستقبال الآراء (اختياري)
 
