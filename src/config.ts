@@ -30,7 +30,7 @@ export const CONFIG = {
     /** WhatsApp number that receives orders. Empty = feedbackWhatsapp. */
     whatsapp: '',
     /** Discount code written in every WhatsApp order message. Empty = no code line. */
-    discountCode: 'BEITY',
+    discountCode: 'BEITY10',
     /** "متابعة خاصة لطيور بيتك VIP" card (a WhatsApp request). */
     vip: true,
   },

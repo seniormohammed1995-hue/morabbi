@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MARKET_CATEGORIES, PRODUCTS, type MarketProduct } from '../data/affiliateProducts'
+import { amazon, AMAZON_TAG, MARKET_CATEGORIES, PRODUCTS, type MarketProduct } from '../data/affiliateProducts'
 import { marketOpen, marketSections, orderText, visibleProducts } from './market'
 
 const base: MarketProduct = {
@@ -35,6 +35,14 @@ describe('market', () => {
   it('adds the discount code line only when there is a code', () => {
     expect(orderText('عايز فقاسة', 'كود الخصم: BEITY', 'BEITY')).toBe('عايز فقاسة\nكود الخصم: BEITY')
     expect(orderText('عايز فقاسة', 'كود الخصم: ', '')).toBe('عايز فقاسة')
+  })
+  it('builds Amazon search links that carry the affiliate tag', () => {
+    const u = new URL(amazon('فقاسة بيض'))
+    expect(u.hostname).toBe('www.amazon.eg')
+    expect(u.searchParams.get('k')).toBe('فقاسة بيض')
+    expect(u.searchParams.get('tag')).toBe(AMAZON_TAG)
+    for (const p of PRODUCTS.filter((x) => x.url.includes('amazon.')))
+      expect(new URL(p.url).searchParams.get('tag')).toBe(AMAZON_TAG)
   })
   it('has unique ids and known categories in the products file', () => {
     expect(new Set(PRODUCTS.map((p) => p.id)).size).toBe(PRODUCTS.length)

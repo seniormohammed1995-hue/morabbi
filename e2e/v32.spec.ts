@@ -32,11 +32,13 @@ test('v3.2: kitchen mixes with sourced doses, the market, and no Gmail button wi
   await expect(page.getByRole('heading', { name: /الشيح المغلي/ })).toBeVisible()
   await expect(page.getByText(/محتاج دوا كوكسيديا من البيطري/)).toBeVisible()
 
-  // Market: no product has a link yet, so only the VIP card shows — never an empty button.
+  // Market: Amazon products with the order button, the commission note and the VIP card.
   await page.goto('/#/market')
   await expect(page.getByRole('heading', { name: 'سوق طيور في بيتي' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /فقاسة بيض ديجيتال/ })).toBeVisible()
+  await expect(page.getByText(/شركاء أمازون/)).toBeVisible()
+  expect(await page.getByRole('button', { name: /اطلب أونلاين/ }).count()).toBeGreaterThan(20)
   await expect(page.getByRole('button', { name: 'اطلب المتابعة الخاصة' })).toBeVisible()
-  await expect(page.getByRole('button', { name: /اطلب أونلاين/ })).toHaveCount(0)
 
   // Gmail sign-in stays hidden until googleClientId is set.
   await page.goto('/#/join')
