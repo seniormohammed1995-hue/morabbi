@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { cloudEnabled, saveProfile, useProfile } from '../../cloud/client'
-import { ProfileForm } from '../../cloud/payload'
+import { cloudEnabled, googleEnabled, saveProfile, unlinkGoogle, useProfile } from '../../cloud/client'
+import { fitName, ProfileForm } from '../../cloud/payload'
 import { KINDS, profilesOf } from '../../data/birds'
 import { GOVERNORATES } from '../../data/rules'
 import type { BirdKind } from '../../data/schema'
@@ -12,6 +12,7 @@ import { t } from '../../i18n'
 import { BirdArt } from '../../ui/BirdArt'
 import { Icon } from '../../ui/Icon'
 import { Button, Card, cx, Field, Page, PageHeader, toast } from '../../ui/kit'
+import { Avatar, GoogleSignIn, type GoogleResult } from './GoogleSignIn'
 
 type Errors = Partial<Record<'name' | 'phone' | 'governorate' | 'kinds', string>>
 
@@ -30,6 +31,7 @@ export default function Join() {
   const [kinds, setKindsLocal] = useState<BirdKind[]>([])
   const [errors, setErrors] = useState<Errors>({})
   const [busy, setBusy] = useState(false)
+  const [google, setGoogle] = useState<GoogleResult | null>(null)
 
   // Prefill once from the saved profile, the weather location and the kinds already picked.
   useEffect(() => {
@@ -55,7 +57,19 @@ export default function Join() {
     setBusy(true)
     try {
       const picked = r.data.kinds as BirdKind[]
-      await saveProfile({ ...r.data, kinds: picked })
+      await saveProfile({
+        ...r.data,
+        kinds: picked,
+        ...(google
+          ? {
+              google: {
+                idToken: google.idToken,
+                email: google.identity.email,
+                picture: google.identity.picture,
+              },
+            }
+          : {}),
+      })
       // Keep the app's kinds in step with what the user just told us.
       if (kindsNow && picked.some((k) => !kindsNow.includes(k))) {
         await setKinds([...new Set([...kindsNow, ...picked])])
@@ -72,6 +86,35 @@ export default function Join() {
     <Page>
       <PageHeader title={t('join.title')} back />
       <p className="mb-4 text-muted">{t('join.sub')}</p>
+      {google || profile?.email ? (
+        <Card tone="leaf" className="mb-4 flex items-center gap-3">
+          <Avatar src={google?.identity.picture ?? profile?.picture} size={44} />
+          <p className="min-w-0 flex-1 truncate font-bold" dir="auto">
+            {t('g.linked', { email: google?.identity.email ?? profile?.email ?? '' })}
+          </p>
+          <Button
+            variant="ghost"
+            className="shrink-0 px-3"
+            onClick={async () => {
+              if (google) return setGoogle(null)
+              await unlinkGoogle()
+              toast(t('g.unlinked'))
+            }}
+          >
+            {google ? t('g.change') : t('g.unlink')}
+          </Button>
+        </Card>
+      ) : (
+        <GoogleSignIn
+          onResult={(r) => {
+            setGoogle(r)
+            setName((v) => (v.trim().length >= 2 ? v : fitName(r.identity.name)))
+          }}
+        />
+      )}
+      {googleEnabled() && !google && !profile?.email && (
+        <p className="mb-2 text-center text-sm font-bold text-muted">{t('g.or')}</p>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -147,7 +190,10 @@ export default function Join() {
         </fieldset>
         <Card tone="plain" className="mb-4 flex gap-2 text-sm text-muted">
           <Icon name="info" size={18} className="mt-0.5 shrink-0" />
-          <span>{cloudEnabled() ? t('join.privacy.cloud') : t('join.privacy.local')}</span>
+          <span>
+            {cloudEnabled() ? t('join.privacy.cloud') : t('join.privacy.local')}
+            {cloudEnabled() && (google || profile?.email) && <> {t('join.privacy.google')}</>}
+          </span>
         </Card>
         <Button type="submit" icon="check" full disabled={busy}>
           {t('join.save')}

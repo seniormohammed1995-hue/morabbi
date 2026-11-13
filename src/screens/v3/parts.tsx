@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { APK_URL, CONFIG } from '../../config'
+import { PRODUCTS } from '../../data/affiliateProducts'
+import { marketOpen } from '../../calc/market'
 import { feedbackUrl, openFeedback } from '../../feedback'
 import { useProfile } from '../../cloud/client'
 import { isNative, share } from '../../platform'
@@ -16,6 +18,14 @@ export async function shareApp(): Promise<void> {
 }
 
 export const hasDirectChat = (): boolean => CONFIG.feedbackWhatsapp.replace(/\D/g, '').length > 0
+
+/** Number that receives market orders (digits only), or '' when none is set. */
+export const marketWhatsapp = (): string =>
+  (CONFIG.market.whatsapp || CONFIG.feedbackWhatsapp).replace(/\D/g, '')
+
+/** Whether "سوق طيور في بيتي" has anything to show yet. */
+export const isMarketOpen = (): boolean =>
+  marketOpen(PRODUCTS, CONFIG.market.vip, marketWhatsapp().length > 0)
 
 export function openDirectChat(): void {
   share.openExternal(feedbackUrl(t('wa.chatMsg', { name: CONFIG.developer.name })))

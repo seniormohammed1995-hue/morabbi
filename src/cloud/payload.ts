@@ -9,6 +9,7 @@ export const SHEETS = {
   users: 'Users_Data',
   feedback: 'Feedback_and_Reports',
   news: 'Flock_News',
+  clicks: 'Affiliate_Clicks',
   /** Not a tab: asks the script to delete every row of one install (see Code.gs). */
   delete: 'Delete',
 } as const
@@ -25,7 +26,53 @@ export interface UserProfile {
   governorate: string
   kinds: BirdKind[]
   createdAt: number
+  /** Set when the user signed in with Google (display only; the sheet trusts the token, not these). */
+  email?: string
+  picture?: string
 }
+
+/** What the app reads from a Google ID token for display. */
+export interface GoogleIdentity {
+  sub: string
+  email: string
+  name: string
+  picture: string
+  /** Seconds since epoch. */
+  exp: number
+}
+
+function base64UrlDecode(s: string): string {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '=')
+  const bin = atob(b64)
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+/**
+ * Reads the profile fields of a Google ID token (a JWT) without checking its signature —
+ * only for showing the name/photo. The Apps Script checks the token with Google before it
+ * stores the email (see Code.gs → verifyGoogle).
+ */
+export function readGoogleIdToken(token: string): GoogleIdentity | null {
+  const part = token.split('.')[1]
+  if (!part) return null
+  try {
+    const c = JSON.parse(base64UrlDecode(part)) as Record<string, unknown>
+    if (typeof c.sub !== 'string' || typeof c.email !== 'string') return null
+    return {
+      sub: c.sub,
+      email: c.email,
+      name: typeof c.name === 'string' ? c.name : '',
+      picture: typeof c.picture === 'string' ? c.picture : '',
+      exp: typeof c.exp === 'number' ? c.exp : 0,
+    }
+  } catch {
+    return null
+  }
+}
+
+/** Google names can be long or one word; fit them to the sign-up form (2–40 letters). */
+export const fitName = (name: string): string => name.trim().replace(/\s+/g, ' ').slice(0, 40)
 
 const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩'
 const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹'
@@ -75,10 +122,15 @@ export interface CloudRequest {
 
 const iso = (ms: number) => new Date(ms).toISOString()
 
-export function userRow(p: UserProfile, env: Envelope, now: number): CloudRequest {
+/**
+ * `idToken` goes only with the sign-up right after "ادخل بـ Gmail"; the sheet keeps the email
+ * it verified then, and later rows (daily "last seen") don't carry it.
+ */
+export function userRow(p: UserProfile, env: Envelope, now: number, idToken?: string): CloudRequest {
   return {
     sheet: SHEETS.users,
     row: {
+      ...(idToken ? { id_token: idToken } : {}),
       client_id: p.clientId,
       name: p.name,
       phone: p.phone,
@@ -135,6 +187,26 @@ export function newsRow(
       group: entry.group,
       note: entry.text.trim(),
       app_version: env.appVersion,
+    },
+  }
+}
+
+export function clickRow(
+  click: { productId: string; product: string; category: string; channel: 'online' | 'whatsapp' },
+  env: Envelope,
+  now: number,
+): CloudRequest {
+  return {
+    sheet: SHEETS.clicks,
+    row: {
+      clicked_at: iso(now),
+      client_id: env.clientId,
+      product_id: click.productId,
+      product: click.product,
+      category: click.category,
+      channel: click.channel,
+      app_version: env.appVersion,
+      platform: env.platform,
     },
   }
 }

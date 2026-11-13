@@ -14,7 +14,7 @@ import { useWeatherView, todayExtremes, runWeatherAlerts, type Group } from './w
 import { WeatherBar } from './weather/WeatherBar'
 import { AlertCard } from './weather/AlertCard'
 import { ageText } from './groups/format'
-import { ApkCard, ContactBanner, JoinCard, ShareAppCard } from './v3/parts'
+import { ApkCard, ContactBanner, isMarketOpen, JoinCard, ShareAppCard } from './v3/parts'
 import { NextUp } from './v3/NextUp'
 
 export function HomeScreen() {
@@ -108,6 +108,7 @@ export function HomeScreen() {
               <ToolTile to="/reminders" icon="bell" label={t('tools.reminders')} />
               <ToolTile to="/schedule" icon="calendar" label={t('tools.schedule')} />
               <ToolTile to="/treatments" icon="syringe" label={t('tools.treatments')} />
+              {isMarketOpen() && <ToolTile to="/market" icon="star" label={t('mk.tile')} />}
             </div>
           </section>
 

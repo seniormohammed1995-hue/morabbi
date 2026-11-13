@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  clickRow,
   feedbackRow,
+  fitName,
+  readGoogleIdToken,
   isEgyptMobile,
   newsRow,
   normalizePhone,
@@ -70,5 +73,39 @@ describe('rows', () => {
     )
     expect(r.sheet).toBe(SHEETS.news)
     expect(r.row.note).toBe('12 بيضة')
+  })
+})
+
+describe('Google sign-in', () => {
+  const b64url = (o: unknown) =>
+    btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(o))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+  const token = (claims: unknown) => `${b64url({ alg: 'RS256' })}.${b64url(claims)}.sig`
+
+  it('reads name, email and photo from an ID token, Arabic names included', () => {
+    const id = readGoogleIdToken(
+      token({ sub: '42', email: 'um.ahmed@gmail.com', name: 'أم أحمد', picture: 'https://x/p.jpg', exp: 99 }),
+    )
+    expect(id).toEqual({ sub: '42', email: 'um.ahmed@gmail.com', name: 'أم أحمد', picture: 'https://x/p.jpg', exp: 99 })
+  })
+  it('rejects junk and tokens without an email', () => {
+    expect(readGoogleIdToken('nope')).toBeNull()
+    expect(readGoogleIdToken('a.%%%.c')).toBeNull()
+    expect(readGoogleIdToken(token({ sub: '42' }))).toBeNull()
+  })
+  it('fits long names to the form', () => {
+    expect(fitName('  Mohamed   Ali ')).toBe('Mohamed Ali')
+    expect(fitName('x'.repeat(60))).toHaveLength(40)
+  })
+  it('sends the token only when given, and builds a click row', () => {
+    const p = { clientId: 'c-1', name: 'أحمد', phone: '', governorate: 'القاهرة', kinds: [], createdAt: 0 }
+    expect(userRow(p, env, 0).row.id_token).toBeUndefined()
+    expect(userRow(p, env, 0, 'tok').row.id_token).toBe('tok')
+    const c = clickRow({ productId: 'incubator', product: 'فقاسة', category: 'heat', channel: 'whatsapp' }, env, 0)
+    expect(c.sheet).toBe(SHEETS.clicks)
+    expect(c.row.channel).toBe('whatsapp')
+    expect(c.row.client_id).toBe('c-1')
   })
 })

@@ -1,7 +1,7 @@
 import { t } from '../../i18n'
 import { Page, PageHeader } from '../../ui/kit'
 import { LinkCard } from '../parts'
-import { ApkCard, ShareAppCard } from '../v3/parts'
+import { ApkCard, isMarketOpen, ShareAppCard } from '../v3/parts'
 
 /** The five home-keeper tools in one place. */
 export default function Tools() {
@@ -29,6 +29,9 @@ export default function Tools() {
           title={t('tools.treatments')}
           sub={t('tools.treatmentsSub')}
         />
+        {isMarketOpen() && (
+          <LinkCard to="/market" icon="star" title={t('mk.title')} sub={t('mk.toolsSub')} />
+        )}
         <LinkCard to="/contact" icon="chat" title={t('tools.contact')} sub={t('tools.contactSub')} />
         <LinkCard to="/about" icon="info" title={t('tools.about')} />
       </div>

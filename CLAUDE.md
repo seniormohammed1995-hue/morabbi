@@ -53,3 +53,8 @@ React 19 + TypeScript (strict) + Vite 8 · Tailwind v4 · Zustand · Dexie (Inde
 - جدول الرعاية: `src/calc/care.ts` (pure) بيقرا ملف السلالة؛ ممنوع أرقام جديدة فيه.
 - فترة السحب: الأيام من المستخدم بس — التطبيق ما يقترحش أيام سحب.
 - Google Play: `PLAY_STORE.md` (الخطوات والإجابات)، صفحات `public/privacy.html` و `public/delete-data.html` (لازم يفضلوا متاحين؛ متشالين من navigateFallback)، صور المتجر `npm run store:shots`. نسخة Play ممنوع فيها أي تحميل أو تحديث APK من برّه المتجر (`ApkCard` مخفي على native).
+
+## v3.2
+- Gmail: `src/platform/google.ts` (GIS على الويب، `@capgo/capacitor-social-login` على الأندرويد)؛ `CONFIG.googleClientId` فاضي = الزرار مخفي. السكربت بيسجّل الإيميل بس بعد `verifyGoogle` (Script Property `GOOGLE_CLIENT_ID`) — التطبيق عمره ما يبعت عمود `email` مباشرة.
+- السوق: المنتجات في `src/data/affiliateProducts.ts` بس، والمنطق في `src/calc/market.ts`. ممنوع أسعار أو "الأكثر طلباً" من عندنا.
+- خلطات المطبخ: `src/data/kitchen.ts` + مصادرها في `src/data/birds/sources/kitchen.ts`. أي خلطة جديدة لازم بحث بجرعة؛ اللي من غير دليل تروح `myths` بحكمها.

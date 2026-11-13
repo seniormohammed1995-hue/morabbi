@@ -16,6 +16,24 @@ export const CONFIG = {
    */
   sheetsEndpoint:
     'https://script.google.com/macros/s/AKfycbyxs_IGBSHXBLXlswnGbgLooNDWTkhaOB8FvTC8zcoiVdkhUCg5d6uCwrrZz_h_EdYqfA/exec',
+  /**
+   * "ادخل بحساب Gmail": the *Web application* OAuth client ID from Google Cloud Console
+   * (ends with .apps.googleusercontent.com) — the same ID works for the web and Android.
+   * Steps in cloud/README.md. Empty = the Gmail button is hidden and sign-up stays as it is.
+   */
+  googleClientId: '',
+  /**
+   * "سوق طيور في بيتي". Products and their links live in src/data/affiliateProducts.ts.
+   * The market shows up only when at least one product has a link (or WhatsApp ordering).
+   */
+  market: {
+    /** WhatsApp number that receives orders. Empty = feedbackWhatsapp. */
+    whatsapp: '',
+    /** Discount code written in every WhatsApp order message. Empty = no code line. */
+    discountCode: 'BEITY',
+    /** "متابعة خاصة لطيور بيتك VIP" card (a WhatsApp request). */
+    vip: true,
+  },
   /** Public link of the web app (used in the share message). */
   appUrl: 'https://seniormohammed1995-hue.github.io/morabbi/',
   /** GitHub repository that builds the Android APK (owner/name). */
@@ -36,7 +54,7 @@ export const CONFIG = {
     github: 'https://github.com/seniormohammed1995-hue',
   },
   /** Shown in "إيه الجديد" once per version (major.minor). */
-  releaseKey: '3.1',
+  releaseKey: '3.2',
 } as const
 
 export const APP_VERSION: string = __APP_VERSION__

@@ -35,6 +35,7 @@ import { PRIVACY_URL } from '../config'
 import { GOVERNORATES } from '../data/rules'
 import { num } from '../i18n/format'
 import { ApkCard, ContactBanner, ShareAppCard } from './v3/parts'
+import { Avatar } from './v3/GoogleSignIn'
 
 const SCALES = [
   { value: '0.9', label: 'أ' },
@@ -68,13 +69,21 @@ export default function Settings() {
       <SectionTitle icon="user">{t('set.profile')}</SectionTitle>
       <Card>
         {profile ? (
-          <p className="font-bold">
-            {t('join.hello', { name: profile.name })}
-            <span className="block text-sm font-normal text-muted">
-              {GOVERNORATES.find((g) => g.id === profile.governorate)?.name}
-              {profile.phone && <span dir="ltr"> · {profile.phone}</span>}
-            </span>
-          </p>
+          <div className="flex items-center gap-3">
+            {profile.email && <Avatar src={profile.picture} size={44} />}
+            <p className="min-w-0 font-bold">
+              {t('join.hello', { name: profile.name })}
+              <span className="block text-sm font-normal text-muted">
+                {GOVERNORATES.find((g) => g.id === profile.governorate)?.name}
+                {profile.phone && <span dir="ltr"> · {profile.phone}</span>}
+              </span>
+              {profile.email && (
+                <span className="block truncate text-sm font-normal text-muted" dir="ltr">
+                  {profile.email}
+                </span>
+              )}
+            </p>
+          </div>
         ) : (
           <p className="text-muted">{t('set.profileEmpty')}</p>
         )}

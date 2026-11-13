@@ -13,6 +13,7 @@ import {
 } from './native'
 
 export { isNative, platformName, wireBackButton } from './native'
+export { googleAuth } from './google'
 export type { DailyNotification, NotificationTap, TimedNotification } from './native'
 
 export type PermissionState = 'granted' | 'denied' | 'default' | 'unsupported'

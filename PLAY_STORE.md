@@ -123,6 +123,8 @@ Play Console ← **Create app**:
 - Is all of the user data collected by your app encrypted in transit? **Yes**
 - Do you provide a way for users to request that their data is deleted? **Yes** — رابط: `…/delete-data.html`
 - Account creation: **My app does not allow users to create an account** — التسجيل الاختياري (اسم ورقم) مفيهوش باسورد ولا تسجيل دخول. رابط مسح البيانات فوق بيغطي طلبات المسح.
+  - **لو حطيت `googleClientId` (v3.2، "ادخل بحساب Gmail"):** غيّرها لـ **My app allows users to create an account → OAuth (Sign in with Google)**، وزوّد سطر **Email address** في الجدول تحت (Collected, Optional, App functionality + Developer communications)، و **Photos** مش لازم (اللينك بس، مش صورة متخزنة — بس الأسلم تختار Personal info → Other info).
+  - **السوق بالعمولة:** مش SDK إعلانات، فإجابة **Ads = No** تفضل. ضغطات "اطلب" بتتسجل كـ App activity → **App interactions** (Collected, Optional, Analytics).
 
 | نوع البيانات | Collected | Shared | Optional | ليه (Purpose) |
 |---|---|---|---|---|

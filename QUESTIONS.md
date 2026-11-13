@@ -51,3 +51,11 @@
 2. **إيميل التواصل** اللي هيظهر في المتجر (مطلوب) — مش متحط في أي مكان في الكود.
 3. **نسخة GitHub (APK) ونسخة Play مش هيتحدّثوا فوق بعض** (Play بيعيد التوقيع). بعد النشر حط لينك المتجر في `CONFIG.playStoreUrl`.
 4. **نشر نسخة سكربت Google Sheets الجديدة** علشان "امسح بياناتي" يشتغل.
+
+## 8) v3.2 — محتاج منك
+
+1. **Gmail:** اعمل OAuth Client ID (Web + Android) وحطه في `CONFIG.googleClientId` وفي Script Properties ← `GOOGLE_CLIENT_ID`. الخطوات في `cloud/README.md` ← "تفعيل ادخل بحساب Gmail". وانشر `Code.gs` كـ New version (هيطلب صلاحية "Connect to an external service").
+2. **السوق:** حط لينكات العمولة (أو `whatsapp: true`) في `src/data/affiliateProducts.ts`. السعر وشارة "الأكثر طلباً" اكتبهم بس لو عارفهم من البياعين والطلبات (ورقة `Affiliate_Clicks` هتقولك الأكثر طلباً). كارت VIP شغّال دلوقتي على رقم الواتساب — اقفله بـ `market.vip: false` لو مش جاهز تقدّم الخدمة.
+3. **⚠️ الجو والعمولة:** شروط Open-Meteo المجانية لتطبيقات "من غير إعلانات ولا اشتراكات" (بند 3). لينكات العمولة غالباً مش إعلانات، بس لو السوق بقى مصدر دخل حقيقي راجع الشروط أو انقل لخطة مدفوعة/بديل.
+4. **أسماء الورق:** فضلت `Users_Data` / `Feedback_and_Reports` / `Flock_News` (مش `Users_Gmail` / `Flock_Logs` زي البرومبت) علشان الجدول المنشور فيه بيانات؛ واتزوّدت `Affiliate_Clicks`.
+5. **ملف الـ APK:** فضل `morabbi-v3.apk` وبيتبني على tag `v*` بس (مش كل push) — تغيير الاسم بيكسر لينك التحميل لحد أول release جديد، والبناء على كل push بيعمل release مع كل commit.

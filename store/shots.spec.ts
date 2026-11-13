@@ -73,7 +73,7 @@ async function seed(page: Page) {
       },
     })
     onboarding.finish()
-    localStorage.setItem('morabbi-seen-release', '3.1')
+    localStorage.setItem('morabbi-seen-release', '3.2')
   })
 }
 

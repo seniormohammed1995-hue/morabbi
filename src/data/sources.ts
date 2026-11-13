@@ -6,6 +6,7 @@ import { QUAIL_SOURCES } from './birds/sources/quail'
 import { DUCK_SOURCES } from './birds/sources/duck'
 import { GOOSE_SOURCES } from './birds/sources/goose'
 import { TURKEY_SOURCES } from './birds/sources/turkey'
+import { KITCHEN_SOURCES } from './birds/sources/kitchen'
 
 const BASE_SOURCES = {
   po22: {
@@ -120,6 +121,7 @@ export const SOURCES = {
   ...DUCK_SOURCES,
   ...GOOSE_SOURCES,
   ...TURKEY_SOURCES,
+  ...KITCHEN_SOURCES,
 } as const satisfies Record<string, SourceRef>
 
 export type SourceId = keyof typeof SOURCES

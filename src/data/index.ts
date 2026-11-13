@@ -1,12 +1,13 @@
 import { INGREDIENTS } from './ingredients'
 import { CONDITIONS, SYMPTOMS } from './health'
-import { BirdProfile, Condition, CycleTemplate, Ingredient, Symptom, SourcedText, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
+import { BirdProfile, Condition, CycleTemplate, Ingredient, Symptom, SourcedText, SourcedValue, SpeciesData, type LocalizedText, type SpeciesGroup } from './schema'
 import { PROFILES, KINDS } from './birds'
 import { SCRAP_ITEMS } from './scraps'
 import { broilerWhite } from './species/broiler-white'
 import { broilerWhiteCycle } from './cycles/broiler-white.cycle'
 import { ar } from './helpers'
 import { CARE_TEXTS } from './care'
+import { KITCHEN } from './kitchen'
 
 export interface SpeciesEntry {
   data: SpeciesData
@@ -67,6 +68,15 @@ export function validateAll(): string[] {
   errors.push(...validateProfiles())
   for (const [i, c] of CARE_TEXTS.entries())
     if (!SourcedText.safeParse(c).success) errors.push(`care text ${i}: invalid`)
+  if (!SourcedText.safeParse(KITCHEN.notTreatment).success) errors.push('kitchen: notTreatment invalid')
+  for (const m of KITCHEN.mixes) {
+    for (const k of ['how', 'evidence', 'careful'] as const)
+      if (!SourcedText.safeParse(m[k]).success) errors.push(`kitchen ${m.id}.${k}: invalid`)
+    if (!SourcedValue.safeParse(m.dose).success) errors.push(`kitchen ${m.id}.dose: invalid`)
+    if (m.testedOn.length === 0) errors.push(`kitchen ${m.id}: testedOn empty`)
+  }
+  for (const m of KITCHEN.myths)
+    if (!SourcedText.safeParse(m.verdict).success) errors.push(`kitchen myth ${m.id}: invalid`)
   return errors
 }
 
@@ -149,5 +159,6 @@ export function lowConfidenceValues(): Array<{ speciesId: string; path: string; 
   for (const p of PROFILES) walk(p.id, p, '')
   for (const ing of INGREDIENTS) walk('ingredients', ing, ing.id)
   walk('care', CARE_TEXTS, '')
+  walk('kitchen', KITCHEN, '')
   return out
 }

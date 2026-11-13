@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { CONFIG } from '../config'
+import { googleEnabled } from '../cloud/client'
+import { PRODUCTS } from '../data/affiliateProducts'
+import { visibleProducts } from '../calc/market'
 import { prefs } from '../platform'
 import { t } from '../i18n'
 import { Icon } from '../ui/Icon'
@@ -12,7 +15,14 @@ export function markVersionSeen(): void {
   prefs.set(KEY, CONFIG.releaseKey)
 }
 
-const ITEMS = ['wn.1', 'wn.2', 'wn.3', 'wn.4', 'wn.5'] as const
+/** 3.2 items; the Gmail and market lines show only once a client id / a product link is set. */
+const items = () =>
+  [
+    'wn32.kitchen',
+    'wn32.myths',
+    ...(googleEnabled() ? (['wn32.gmail'] as const) : []),
+    ...(visibleProducts(PRODUCTS).length > 0 ? (['wn32.market'] as const) : []),
+  ] as const
 
 /** Shown once after an update to a new release (existing users only — onboarding marks it seen). */
 export function WhatsNew() {
@@ -42,7 +52,7 @@ export function WhatsNew() {
         <Icon name="star" className="text-accent" /> {t('wn.title', { v: CONFIG.releaseKey })}
       </h2>
       <ul className="mt-3 space-y-2">
-        {ITEMS.map((k) => (
+        {items().map((k) => (
           <li key={k} className="flex gap-2">
             <Icon name="check" size={20} className="mt-0.5 shrink-0 text-leaf" />
             <span>{t(k)}</span>

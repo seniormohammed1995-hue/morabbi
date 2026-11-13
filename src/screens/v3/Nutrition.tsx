@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getProfile, KINDS, profilesOf } from '../../data/birds'
 import { ECONOMY } from '../../data/nutrition'
+import { KITCHEN } from '../../data/kitchen'
 import { RULES } from '../../data/rules'
 import { SCRAP_ITEMS } from '../../data/scraps'
 import { WEATHER } from '../../data/weather'
@@ -28,7 +29,7 @@ import {
   Tabs,
 } from '../../ui/kit'
 
-type Tab = 'calc' | 'feeds' | 'economy'
+type Tab = 'calc' | 'feeds' | 'economy' | 'kitchen'
 
 /** Feeding guide: daily calculator, feed types by age, and the household-scraps guide. */
 export default function Nutrition() {
@@ -46,11 +47,13 @@ export default function Nutrition() {
           { value: 'calc', label: t('nu.tab.calc') },
           { value: 'feeds', label: t('nu.tab.feeds') },
           { value: 'economy', label: t('nu.tab.economy') },
+          { value: 'kitchen', label: t('km.tab') },
         ]}
       />
       {tab === 'calc' && <Calculator />}
       {tab === 'feeds' && <FeedTypes kinds={myKinds} />}
       {tab === 'economy' && <Economy kinds={myKinds} onCalc={() => setParams({ tab: 'calc' })} />}
+      {tab === 'kitchen' && <KitchenMixes />}
     </Page>
   )
 }
@@ -363,5 +366,69 @@ function Verdicts({ item, profiles }: { item: string; profiles: BirdProfile[] })
         </span>
       ))}
     </div>
+  )
+}
+
+// ---------- kitchen mixes ----------
+
+function KitchenMixes() {
+  return (
+    <>
+      <p className="mb-3 leading-relaxed">{t('km.intro')}</p>
+      <Card tone="danger" className="mb-4">
+        <div className="flex gap-2">
+          <Icon name="alert" size={22} className="mt-0.5 shrink-0 text-danger" />
+          <div>
+            <p className="font-bold">{t('km.vet')}</p>
+            <Link to="/sick" className="mt-2 inline-block font-bold text-danger underline">
+              {t('km.sick')}
+            </Link>
+          </div>
+        </div>
+      </Card>
+      <ul className="space-y-3">
+        {KITCHEN.mixes.map((m) => (
+          <li key={m.id}>
+            <Card>
+              <h3 className="text-lg font-extrabold">{lt(m.name)}</h3>
+              <div className="mt-2 rounded-xl bg-leaf-soft p-3">
+                <div className="text-2xl font-extrabold text-leaf">
+                  {m.dose.min !== undefined && m.dose.max !== undefined
+                    ? `${num(m.dose.min, 1)} – ${num(m.dose.max, 1)}`
+                    : num(m.dose.value, 1)}{' '}
+                  <span className="text-base font-bold">{m.dose.unit}</span>
+                </div>
+                <SourceNote item={m.dose} />
+              </div>
+              <p className="mt-3 text-sm font-bold text-muted">{t('km.how')}</p>
+              <p className="leading-relaxed">{lt(m.how.text)}</p>
+              <p className="mt-3 text-sm font-bold text-muted">{t('km.evidence')}</p>
+              <p className="leading-relaxed">{lt(m.evidence.text)}</p>
+              <SourceNote item={m.evidence} />
+              <p className="mt-3 text-sm font-bold text-warn">{t('km.careful')}</p>
+              <p className="leading-relaxed">{lt(m.careful.text)}</p>
+              <p className="mt-2 text-xs text-muted">
+                {t('km.forKinds', { kinds: m.testedOn.map((k) => t(`kind.${k}`)).join('، ') })}
+              </p>
+            </Card>
+          </li>
+        ))}
+      </ul>
+
+      <SectionTitle icon="info">{t('km.myths')}</SectionTitle>
+      <ul className="space-y-2">
+        {KITCHEN.myths.map((m) => (
+          <li key={m.id}>
+            <Card tone="plain">
+              <h3 className="font-extrabold">{lt(m.name)}</h3>
+              <p className="mt-1 leading-relaxed">{lt(m.verdict.text)}</p>
+              <SourceNote item={m.verdict} />
+            </Card>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-sm text-muted">{lt(KITCHEN.notTreatment.text)}</p>
+      <SourceNote item={KITCHEN.notTreatment} />
+    </>
   )
 }

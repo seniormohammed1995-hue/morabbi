@@ -6,7 +6,13 @@
  * Full steps: cloud/README.md.
  *
  * The app POSTs JSON as text/plain: { "sheet": "<tab name>", "row": { column: value, ... } }.
- * Tabs and their header rows are created automatically on first use.
+ * Tabs and their header rows are created automatically on first use; new columns added in a
+ * later version are appended to the header of an existing tab.
+ *
+ * Gmail sign-in (optional): put the app's Web OAuth client ID in
+ * Project Settings → Script Properties → GOOGLE_CLIENT_ID. The app then sends the Google
+ * ID token once with the sign-up; this script asks Google whether the token is real and only
+ * then stores the email. Without the property, emails are never stored.
  */
 
 const TABS = {
@@ -21,6 +27,8 @@ const TABS = {
     'visits',
     'app_version',
     'platform',
+    'email',
+    'photo',
   ],
   Feedback_and_Reports: [
     'sent_at',
@@ -48,7 +56,20 @@ const TABS = {
     'client_id',
     'app_version',
   ],
+  Affiliate_Clicks: [
+    'clicked_at',
+    'product_id',
+    'product',
+    'category',
+    'channel',
+    'client_id',
+    'app_version',
+    'platform',
+  ],
 };
+
+/** Columns the app may not write directly (set only from a verified Google token). */
+const VERIFIED_ONLY = ['email', 'photo'];
 
 /** Arabic labels for the message type column, so the sheet is easy to read. */
 const TYPE_LABELS = {
@@ -111,14 +132,50 @@ function allowed(clientId) {
 
 function ensureTab(name) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const cols = TABS[name];
   let sheet = ss.getSheetByName(name);
   if (!sheet) {
     sheet = ss.insertSheet(name);
-    sheet.getRange(1, 1, 1, TABS[name].length).setValues([TABS[name]]).setFontWeight('bold');
+    sheet.getRange(1, 1, 1, cols.length).setValues([cols]).setFontWeight('bold');
     sheet.setFrozenRows(1);
     sheet.setRightToLeft(true);
+  } else if (sheet.getLastColumn() < cols.length) {
+    // A newer version added columns at the end: add their titles, old rows stay as they are.
+    const from = sheet.getLastColumn() + 1;
+    sheet
+      .getRange(1, from, 1, cols.length - from + 1)
+      .setValues([cols.slice(from - 1)])
+      .setFontWeight('bold');
   }
   return sheet;
+}
+
+/**
+ * Asks Google whether a Sign-In ID token is genuine and meant for this app.
+ * Returns { email, picture } or null. Needs Script Property GOOGLE_CLIENT_ID.
+ */
+function verifyGoogle(idToken) {
+  const allowed = String(PropertiesService.getScriptProperties().getProperty('GOOGLE_CLIENT_ID') || '')
+    .split(',')
+    .map(function (s) {
+      return s.trim();
+    })
+    .filter(String);
+  if (!idToken || !allowed.length) return null;
+  try {
+    const res = UrlFetchApp.fetch(
+      'https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(String(idToken)),
+      { muteHttpExceptions: true },
+    );
+    if (res.getResponseCode() !== 200) return null;
+    const c = JSON.parse(res.getContentText());
+    const issOk = c.iss === 'accounts.google.com' || c.iss === 'https://accounts.google.com';
+    const fresh = Number(c.exp) * 1000 > Date.now();
+    if (!issOk || !fresh || allowed.indexOf(c.aud) < 0 || String(c.email_verified) !== 'true') return null;
+    return { email: String(c.email || ''), picture: String(c.picture || '') };
+  } catch (err) {
+    return null;
+  }
 }
 
 /** Text only, length-limited, and never starting with = + - @ (stops formula injection). */
@@ -134,16 +191,25 @@ function appendRow(sheet, tab, row) {
   const values = TABS[tab].map(function (col) {
     if (col === 'type') return TYPE_LABELS[row.type] || clean(row.type);
     if (col === 'reply') return '';
+    if (VERIFIED_ONLY.indexOf(col) >= 0) return '';
     return clean(row[col]);
   });
   sheet.appendRow(values);
 }
 
-/** One row per install: update name/phone/kinds/last_seen and count visits. */
+/**
+ * One row per install: update name/phone/kinds/last_seen and count visits.
+ * email/photo change only when the row carries a Google token that verifyGoogle accepts.
+ */
 function upsertUser(sheet, row) {
   const cols = TABS.Users_Data;
   const id = clean(row.client_id);
   if (!id) throw new Error('missing client_id');
+  const google = row.id_token ? verifyGoogle(row.id_token) : null;
+  const unlink = String(row.unlink_google || '') === '1';
+  const verified = unlink
+    ? { email: '', photo: '' }
+    : { email: google ? google.email : undefined, photo: google ? google.picture : undefined };
   const last = sheet.getLastRow();
   if (last >= 2) {
     const ids = sheet.getRange(2, 1, last - 1, 1).getValues();
@@ -155,6 +221,7 @@ function upsertUser(sheet, row) {
           if (col === 'visits') return Number(current[j] || 0) + 1;
           if (col === 'first_seen') return current[j] || clean(row.first_seen);
           if (col === 'phone' && !row.phone) return clean(current[j]);
+          if (VERIFIED_ONLY.indexOf(col) >= 0) return verified[col] === undefined ? clean(current[j]) : clean(verified[col]);
           return row[col] === undefined ? clean(current[j]) : clean(row[col]);
         });
         sheet.getRange(r, 1, 1, cols.length).setValues([next]);
@@ -164,7 +231,9 @@ function upsertUser(sheet, row) {
   }
   sheet.appendRow(
     cols.map(function (col) {
-      return col === 'visits' ? 1 : clean(row[col]);
+      if (col === 'visits') return 1;
+      if (VERIFIED_ONLY.indexOf(col) >= 0) return clean(verified[col]);
+      return clean(row[col]);
     }),
   );
 }

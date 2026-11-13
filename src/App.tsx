@@ -55,6 +55,7 @@ const Journal = lazy(() => import('./screens/v3/Journal'))
 const Nutrition = lazy(() => import('./screens/v3/Nutrition'))
 const CareSchedule = lazy(() => import('./screens/v3/CareSchedule'))
 const Treatments = lazy(() => import('./screens/v3/Treatments'))
+const Market = lazy(() => import('./screens/v3/Market'))
 const Android = lazy(() => import('./screens/v3/Android'))
 
 function UpdateBanner() {
@@ -218,6 +219,7 @@ function MainApp() {
           <Route path="/android" element={<Android />} />
           <Route path="/schedule" element={<CareSchedule />} />
           <Route path="/treatments" element={<Treatments />} />
+          <Route path="/market" element={<Market />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

@@ -10,6 +10,15 @@
     "LocalNotifications": {
       "smallIcon": "ic_stat_tuyuri",
       "iconColor": "#B4532A"
+    },
+    "SocialLogin": {
+      "providers": {
+        "google": true,
+        "facebook": false,
+        "apple": false,
+        "twitter": false
+      },
+      "logLevel": 1
     }
   }
 }

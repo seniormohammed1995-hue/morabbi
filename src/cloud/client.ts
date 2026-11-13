@@ -4,10 +4,11 @@ import { db } from '../db'
 import { getKinds } from '../db/birds'
 import { GOVERNORATES, RULES } from '../data/rules'
 import { todayISO } from '../calc/dates'
-import { cloud, device, platformName, share } from '../platform'
+import { cloud, device, googleAuth, platformName, share } from '../platform'
 import { t } from '../i18n'
 import { feedbackUrl } from '../feedback'
 import {
+  clickRow,
   deleteRequest,
   feedbackRow,
   feedbackWhatsappText,
@@ -50,14 +51,23 @@ export function useProfile(): UserProfile | null | undefined {
 
 const govName = (id: string) => GOVERNORATES.find((g) => g.id === id)?.name ?? id
 
-/** Saves the sign-up on the phone and queues it for the sheet. */
+export const googleEnabled = (): boolean => CONFIG.googleClientId.trim().length > 0
+
+/**
+ * Saves the sign-up on the phone and queues it for the sheet.
+ * `google` is set right after "ادخل بـ Gmail": its token goes with this one row so the sheet
+ * can verify the email; `null` removes a previous Gmail link; undefined keeps what was there.
+ */
 export async function saveProfile(p: {
   name: string
   phone: string
   governorate: string
   kinds: UserProfile['kinds']
+  google?: { idToken: string; email: string; picture: string } | null
 }): Promise<void> {
   const old = await getProfile()
+  const email = p.google === null ? undefined : (p.google?.email ?? old?.email)
+  const picture = p.google === null ? undefined : (p.google?.picture ?? old?.picture)
   const profile: UserProfile = {
     clientId: await clientId(),
     name: p.name,
@@ -65,6 +75,8 @@ export async function saveProfile(p: {
     governorate: p.governorate,
     kinds: p.kinds,
     createdAt: old?.createdAt ?? Date.now(),
+    ...(email ? { email } : {}),
+    ...(picture ? { picture } : {}),
   }
   await db.kv.put({ key: KV_PROFILE, value: profile })
   if (cloudEnabled()) {
@@ -73,6 +85,7 @@ export async function saveProfile(p: {
         { ...profile, governorate: govName(profile.governorate) },
         await envelope(),
         Date.now(),
+        p.google?.idToken,
       ),
     )
     await db.kv.put({ key: KV_PING, value: todayISO() })
@@ -96,6 +109,30 @@ export async function pingUser(): Promise<void> {
     ),
   )
   await db.kv.put({ key: KV_PING, value: today })
+}
+
+/** "اخرج من Gmail": keeps the sign-up on the phone, drops the email and photo. */
+export async function unlinkGoogle(): Promise<void> {
+  const p = await getProfile()
+  await googleAuth.signOut(CONFIG.googleClientId)
+  if (!p) return
+  const { email: _e, picture: _p, ...rest } = p
+  await db.kv.put({ key: KV_PROFILE, value: rest })
+  if (cloudEnabled()) {
+    const req = userRow({ ...rest, governorate: govName(rest.governorate) }, await envelope(), Date.now())
+    // Tells the sheet to clear the stored email and photo too.
+    await enqueue({ ...req, row: { ...req.row, unlink_google: '1' } })
+    void flushOutbox()
+  }
+}
+
+// ---------- market clicks ----------
+
+/** Logs a "اطلب" tap on a market product (Affiliate_Clicks). Never blocks opening the link. */
+export async function logClick(click: Parameters<typeof clickRow>[0]): Promise<void> {
+  if (!cloudEnabled()) return
+  await enqueue(clickRow(click, await envelope(), Date.now()))
+  void flushOutbox()
 }
 
 // ---------- outbox ----------
